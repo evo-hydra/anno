@@ -1,0 +1,2476 @@
+{
+  "timestamp": "2025-10-06T16:35:23.303Z",
+  "config": {
+    "totalUrls": 35,
+    "runsPerUrl": 3,
+    "totalTests": 92
+  },
+  "aggregateResults": {
+    "avgTokenReduction": 93.6187444980687,
+    "stdDevTokenReduction": 11.88209084208598,
+    "confidenceInterval95": {
+      "lower": 91.1907090325524,
+      "upper": 96.04677996358498
+    },
+    "median": 98.81452391952624,
+    "p25": 93.04776855797265,
+    "p75": 99.87739556884978,
+    "p95": 99.97382017297612
+  },
+  "byCategory": {
+    "news": {
+      "avgReduction": 99.61532458200301,
+      "count": 15,
+      "urls": 5
+    },
+    "documentation": {
+      "avgReduction": 95.78715750476508,
+      "count": 15,
+      "urls": 5
+    },
+    "wikipedia": {
+      "avgReduction": 96.76275174035847,
+      "count": 15,
+      "urls": 5
+    },
+    "ecommerce": {
+      "avgReduction": 99.56477608419075,
+      "count": 8,
+      "urls": 3
+    },
+    "tech-blog": {
+      "avgReduction": 90.0078971311088,
+      "count": 15,
+      "urls": 5
+    },
+    "github": {
+      "avgReduction": 98.82712402281663,
+      "count": 15,
+      "urls": 5
+    },
+    "simple": {
+      "avgReduction": 66.82249560366799,
+      "count": 9,
+      "urls": 3
+    }
+  },
+  "byComplexity": {
+    "high": {
+      "avgReduction": 98.56982898603341,
+      "count": 41
+    },
+    "medium": {
+      "avgReduction": 93.68887412722262,
+      "count": 36
+    },
+    "low": {
+      "avgReduction": 79.91746912099553,
+      "count": 15
+    }
+  },
+  "qualityMetrics": {
+    "avgNeurosurfQuality": 20,
+    "avgTraditionalQuality": 75,
+    "avgInformationPreservation": 6.381255501931327
+  },
+  "statisticalTests": {
+    "sampleSize": 92,
+    "pValue": 0.01,
+    "isSignificant": true,
+    "effectSize": 7.878979023327624
+  },
+  "rawResults": [
+    {
+      "url": "https://www.bbc.com/news/technology",
+      "category": "news",
+      "run": 1,
+      "traditional": {
+        "contentSize": 483508,
+        "tokens": 120877,
+        "processingTimeMs": 436.14568799999995
+      },
+      "anno": {
+        "contentSize": 2177,
+        "tokens": 545,
+        "processingTimeMs": 3872.114171,
+        "confidence": 0.77,
+        "semanticNodes": 92
+      },
+      "reduction": {
+        "tokenPercent": 99.54912845289013,
+        "sizePercent": 99.54974891832194
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.450871547109872
+      }
+    },
+    {
+      "url": "https://www.bbc.com/news/technology",
+      "category": "news",
+      "run": 2,
+      "traditional": {
+        "contentSize": 483508,
+        "tokens": 120877,
+        "processingTimeMs": 146.52009799999996
+      },
+      "anno": {
+        "contentSize": 2177,
+        "tokens": 545,
+        "processingTimeMs": 2713.7972119999995,
+        "confidence": 0.77,
+        "semanticNodes": 92
+      },
+      "reduction": {
+        "tokenPercent": 99.54912845289013,
+        "sizePercent": 99.54974891832194
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.450871547109872
+      }
+    },
+    {
+      "url": "https://www.bbc.com/news/technology",
+      "category": "news",
+      "run": 3,
+      "traditional": {
+        "contentSize": 483508,
+        "tokens": 120877,
+        "processingTimeMs": 202.56167300000016
+      },
+      "anno": {
+        "contentSize": 2177,
+        "tokens": 545,
+        "processingTimeMs": 2834.12154,
+        "confidence": 0.77,
+        "semanticNodes": 92
+      },
+      "reduction": {
+        "tokenPercent": 99.54912845289013,
+        "sizePercent": 99.54974891832194
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.450871547109872
+      }
+    },
+    {
+      "url": "https://www.reuters.com/technology/",
+      "category": "news",
+      "run": 1,
+      "traditional": {
+        "contentSize": 413934,
+        "tokens": 103484,
+        "processingTimeMs": 457.02510599999914
+      },
+      "anno": {
+        "contentSize": 293,
+        "tokens": 74,
+        "processingTimeMs": 1803.6087880000014,
+        "confidence": 0.54,
+        "semanticNodes": 3
+      },
+      "reduction": {
+        "tokenPercent": 99.92849136098334,
+        "sizePercent": 99.92921576869742
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.07150863901665959
+      }
+    },
+    {
+      "url": "https://www.reuters.com/technology/",
+      "category": "news",
+      "run": 2,
+      "traditional": {
+        "contentSize": 413933,
+        "tokens": 103484,
+        "processingTimeMs": 282.2239329999975
+      },
+      "anno": {
+        "contentSize": 478,
+        "tokens": 120,
+        "processingTimeMs": 2439.5764720000006,
+        "confidence": 0.62,
+        "semanticNodes": 4
+      },
+      "reduction": {
+        "tokenPercent": 99.88404004483785,
+        "sizePercent": 99.88452237439392
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.11595995516215069
+      }
+    },
+    {
+      "url": "https://www.reuters.com/technology/",
+      "category": "news",
+      "run": 3,
+      "traditional": {
+        "contentSize": 413934,
+        "tokens": 103484,
+        "processingTimeMs": 256.1983770000006
+      },
+      "anno": {
+        "contentSize": 345,
+        "tokens": 87,
+        "processingTimeMs": 1866.3410919999988,
+        "confidence": 0.54,
+        "semanticNodes": 2
+      },
+      "reduction": {
+        "tokenPercent": 99.91592903250745,
+        "sizePercent": 99.91665337952426
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.08407096749255924
+      }
+    },
+    {
+      "url": "https://apnews.com/technology",
+      "category": "news",
+      "run": 1,
+      "traditional": {
+        "contentSize": 980764,
+        "tokens": 245191,
+        "processingTimeMs": 446.9003080000002
+      },
+      "anno": {
+        "contentSize": 515,
+        "tokens": 129,
+        "processingTimeMs": 3298.746596000001,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 20
+      },
+      "reduction": {
+        "tokenPercent": 99.94738795469654,
+        "sizePercent": 99.94748991602465
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.0526120453034573
+      }
+    },
+    {
+      "url": "https://apnews.com/technology",
+      "category": "news",
+      "run": 2,
+      "traditional": {
+        "contentSize": 980764,
+        "tokens": 245191,
+        "processingTimeMs": 107.5346470000004
+      },
+      "anno": {
+        "contentSize": 515,
+        "tokens": 129,
+        "processingTimeMs": 2256.7883070000025,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 20
+      },
+      "reduction": {
+        "tokenPercent": 99.94738795469654,
+        "sizePercent": 99.94748991602465
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.0526120453034573
+      }
+    },
+    {
+      "url": "https://apnews.com/technology",
+      "category": "news",
+      "run": 3,
+      "traditional": {
+        "contentSize": 980764,
+        "tokens": 245191,
+        "processingTimeMs": 103.35536500000308
+      },
+      "anno": {
+        "contentSize": 515,
+        "tokens": 129,
+        "processingTimeMs": 2193.6451559999987,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 20
+      },
+      "reduction": {
+        "tokenPercent": 99.94738795469654,
+        "sizePercent": 99.94748991602465
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.0526120453034573
+      }
+    },
+    {
+      "url": "https://www.theguardian.com/technology",
+      "category": "news",
+      "run": 1,
+      "traditional": {
+        "contentSize": 600784,
+        "tokens": 150196,
+        "processingTimeMs": 543.3311269999977
+      },
+      "anno": {
+        "contentSize": 7197,
+        "tokens": 1800,
+        "processingTimeMs": 1632.1535609999992,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.80156595382033,
+        "sizePercent": 98.80206530133958
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.1984340461796588
+      }
+    },
+    {
+      "url": "https://www.theguardian.com/technology",
+      "category": "news",
+      "run": 2,
+      "traditional": {
+        "contentSize": 600632,
+        "tokens": 150158,
+        "processingTimeMs": 88.22661599999992
+      },
+      "anno": {
+        "contentSize": 7197,
+        "tokens": 1800,
+        "processingTimeMs": 1054.9400839999944,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.80126266998761,
+        "sizePercent": 98.80176214387511
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.198737330012387
+      }
+    },
+    {
+      "url": "https://www.theguardian.com/technology",
+      "category": "news",
+      "run": 3,
+      "traditional": {
+        "contentSize": 600784,
+        "tokens": 150196,
+        "processingTimeMs": 135.07738399999653
+      },
+      "anno": {
+        "contentSize": 7197,
+        "tokens": 1800,
+        "processingTimeMs": 1105.199489999999,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.80156595382033,
+        "sizePercent": 98.80206530133958
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.1984340461796588
+      }
+    },
+    {
+      "url": "https://techcrunch.com/",
+      "category": "news",
+      "run": 1,
+      "traditional": {
+        "contentSize": 443272,
+        "tokens": 110818,
+        "processingTimeMs": 147.4947300000058
+      },
+      "anno": {
+        "contentSize": 579,
+        "tokens": 145,
+        "processingTimeMs": 1828.6659500000023,
+        "confidence": 0.7200000000000001,
+        "semanticNodes": 12
+      },
+      "reduction": {
+        "tokenPercent": 99.86915483044271,
+        "sizePercent": 99.86938042556264
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.13084516955729214
+      }
+    },
+    {
+      "url": "https://techcrunch.com/",
+      "category": "news",
+      "run": 2,
+      "traditional": {
+        "contentSize": 443272,
+        "tokens": 110818,
+        "processingTimeMs": 27.29801099999895
+      },
+      "anno": {
+        "contentSize": 579,
+        "tokens": 145,
+        "processingTimeMs": 1174.7206880000012,
+        "confidence": 0.7200000000000001,
+        "semanticNodes": 12
+      },
+      "reduction": {
+        "tokenPercent": 99.86915483044271,
+        "sizePercent": 99.86938042556264
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.13084516955729214
+      }
+    },
+    {
+      "url": "https://techcrunch.com/",
+      "category": "news",
+      "run": 3,
+      "traditional": {
+        "contentSize": 443272,
+        "tokens": 110818,
+        "processingTimeMs": 25.18213800000376
+      },
+      "anno": {
+        "contentSize": 579,
+        "tokens": 145,
+        "processingTimeMs": 880.9603659999993,
+        "confidence": 0.7200000000000001,
+        "semanticNodes": 12
+      },
+      "reduction": {
+        "tokenPercent": 99.86915483044271,
+        "sizePercent": 99.86938042556264
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.13084516955729214
+      }
+    },
+    {
+      "url": "https://nodejs.org/en/docs",
+      "category": "documentation",
+      "run": 1,
+      "traditional": {
+        "contentSize": 14135,
+        "tokens": 3534,
+        "processingTimeMs": 269.09011500000634
+      },
+      "anno": {
+        "contentSize": 1514,
+        "tokens": 379,
+        "processingTimeMs": 7285.778486000003,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 89.27560837577816,
+        "sizePercent": 89.28899893880438
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 10.724391624221845
+      }
+    },
+    {
+      "url": "https://nodejs.org/en/docs",
+      "category": "documentation",
+      "run": 2,
+      "traditional": {
+        "contentSize": 14135,
+        "tokens": 3534,
+        "processingTimeMs": 325.3480620000046
+      },
+      "anno": {
+        "contentSize": 1514,
+        "tokens": 379,
+        "processingTimeMs": 22446.807939000006,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 89.27560837577816,
+        "sizePercent": 89.28899893880438
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 10.724391624221845
+      }
+    },
+    {
+      "url": "https://nodejs.org/en/docs",
+      "category": "documentation",
+      "run": 3,
+      "traditional": {
+        "contentSize": 14135,
+        "tokens": 3534,
+        "processingTimeMs": 220.2470009999961
+      },
+      "anno": {
+        "contentSize": 1514,
+        "tokens": 379,
+        "processingTimeMs": 28967.37467199999,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 89.27560837577816,
+        "sizePercent": 89.28899893880438
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 10.724391624221845
+      }
+    },
+    {
+      "url": "https://docs.python.org/3/",
+      "category": "documentation",
+      "run": 1,
+      "traditional": {
+        "contentSize": 17835,
+        "tokens": 4459,
+        "processingTimeMs": 153.8546950000018
+      },
+      "anno": {
+        "contentSize": 1239,
+        "tokens": 310,
+        "processingTimeMs": 6770.527885000003,
+        "confidence": 0.77,
+        "semanticNodes": 25
+      },
+      "reduction": {
+        "tokenPercent": 93.04776855797265,
+        "sizePercent": 93.05298570227082
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 6.952231442027361
+      }
+    },
+    {
+      "url": "https://docs.python.org/3/",
+      "category": "documentation",
+      "run": 2,
+      "traditional": {
+        "contentSize": 17835,
+        "tokens": 4459,
+        "processingTimeMs": 50.376233000002685
+      },
+      "anno": {
+        "contentSize": 1239,
+        "tokens": 310,
+        "processingTimeMs": 11874.136699999988,
+        "confidence": 0.77,
+        "semanticNodes": 25
+      },
+      "reduction": {
+        "tokenPercent": 93.04776855797265,
+        "sizePercent": 93.05298570227082
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 6.952231442027361
+      }
+    },
+    {
+      "url": "https://docs.python.org/3/",
+      "category": "documentation",
+      "run": 3,
+      "traditional": {
+        "contentSize": 17835,
+        "tokens": 4459,
+        "processingTimeMs": 44.07411200000206
+      },
+      "anno": {
+        "contentSize": 1239,
+        "tokens": 310,
+        "processingTimeMs": 1525.786344000022,
+        "confidence": 0.77,
+        "semanticNodes": 25
+      },
+      "reduction": {
+        "tokenPercent": 93.04776855797265,
+        "sizePercent": 93.05298570227082
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 6.952231442027361
+      }
+    },
+    {
+      "url": "https://react.dev/",
+      "category": "documentation",
+      "run": 1,
+      "traditional": {
+        "contentSize": 272659,
+        "tokens": 68165,
+        "processingTimeMs": 205.4847609999997
+      },
+      "anno": {
+        "contentSize": 3495,
+        "tokens": 874,
+        "processingTimeMs": 4889.119737000001,
+        "confidence": 0.77,
+        "semanticNodes": 28
+      },
+      "reduction": {
+        "tokenPercent": 98.71781706154185,
+        "sizePercent": 98.71817911750574
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.282182938458153
+      }
+    },
+    {
+      "url": "https://react.dev/",
+      "category": "documentation",
+      "run": 2,
+      "traditional": {
+        "contentSize": 272659,
+        "tokens": 68165,
+        "processingTimeMs": 100.4033660000132
+      },
+      "anno": {
+        "contentSize": 3495,
+        "tokens": 874,
+        "processingTimeMs": 2240.1407550000004,
+        "confidence": 0.77,
+        "semanticNodes": 28
+      },
+      "reduction": {
+        "tokenPercent": 98.71781706154185,
+        "sizePercent": 98.71817911750574
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.282182938458153
+      }
+    },
+    {
+      "url": "https://react.dev/",
+      "category": "documentation",
+      "run": 3,
+      "traditional": {
+        "contentSize": 272659,
+        "tokens": 68165,
+        "processingTimeMs": 47.576908999995794
+      },
+      "anno": {
+        "contentSize": 3495,
+        "tokens": 874,
+        "processingTimeMs": 2097.5538140000135,
+        "confidence": 0.77,
+        "semanticNodes": 28
+      },
+      "reduction": {
+        "tokenPercent": 98.71781706154185,
+        "sizePercent": 98.71817911750574
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.282182938458153
+      }
+    },
+    {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "category": "documentation",
+      "run": 1,
+      "traditional": {
+        "contentSize": 188088,
+        "tokens": 47022,
+        "processingTimeMs": 585.2562180000241
+      },
+      "anno": {
+        "contentSize": 2950,
+        "tokens": 738,
+        "processingTimeMs": 13533.277686999994,
+        "confidence": 0.77,
+        "semanticNodes": 27
+      },
+      "reduction": {
+        "tokenPercent": 98.43052188337374,
+        "sizePercent": 98.43158521543107
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.56947811662626
+      }
+    },
+    {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "category": "documentation",
+      "run": 2,
+      "traditional": {
+        "contentSize": 188088,
+        "tokens": 47022,
+        "processingTimeMs": 72.84824299998581
+      },
+      "anno": {
+        "contentSize": 2950,
+        "tokens": 738,
+        "processingTimeMs": 7875.027361000015,
+        "confidence": 0.77,
+        "semanticNodes": 27
+      },
+      "reduction": {
+        "tokenPercent": 98.43052188337374,
+        "sizePercent": 98.43158521543107
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.56947811662626
+      }
+    },
+    {
+      "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      "category": "documentation",
+      "run": 3,
+      "traditional": {
+        "contentSize": 188088,
+        "tokens": 47022,
+        "processingTimeMs": 65.68002200001501
+      },
+      "anno": {
+        "contentSize": 2950,
+        "tokens": 738,
+        "processingTimeMs": 7927.214605999994,
+        "confidence": 0.77,
+        "semanticNodes": 27
+      },
+      "reduction": {
+        "tokenPercent": 98.43052188337374,
+        "sizePercent": 98.43158521543107
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.56947811662626
+      }
+    },
+    {
+      "url": "https://www.typescriptlang.org/docs/",
+      "category": "documentation",
+      "run": 1,
+      "traditional": {
+        "contentSize": 170170,
+        "tokens": 42543,
+        "processingTimeMs": 196.1407959999924
+      },
+      "anno": {
+        "contentSize": 910,
+        "tokens": 228,
+        "processingTimeMs": 6846.2376260000165,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.46407164515901,
+        "sizePercent": 99.46524064171123
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.5359283548409843
+      }
+    },
+    {
+      "url": "https://www.typescriptlang.org/docs/",
+      "category": "documentation",
+      "run": 2,
+      "traditional": {
+        "contentSize": 170170,
+        "tokens": 42543,
+        "processingTimeMs": 55.43112100000144
+      },
+      "anno": {
+        "contentSize": 910,
+        "tokens": 228,
+        "processingTimeMs": 2388.782149000006,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.46407164515901,
+        "sizePercent": 99.46524064171123
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.5359283548409843
+      }
+    },
+    {
+      "url": "https://www.typescriptlang.org/docs/",
+      "category": "documentation",
+      "run": 3,
+      "traditional": {
+        "contentSize": 170170,
+        "tokens": 42543,
+        "processingTimeMs": 28.81223099998897
+      },
+      "anno": {
+        "contentSize": 910,
+        "tokens": 228,
+        "processingTimeMs": 6420.609135999985,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.46407164515901,
+        "sizePercent": 99.46524064171123
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.5359283548409843
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "category": "wikipedia",
+      "run": 1,
+      "traditional": {
+        "contentSize": 1268152,
+        "tokens": 317038,
+        "processingTimeMs": 352.4779700000072
+      },
+      "anno": {
+        "contentSize": 330,
+        "tokens": 83,
+        "processingTimeMs": 7601.559859000001,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97382017297612,
+        "sizePercent": 99.97397788277745
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.02617982702388988
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "category": "wikipedia",
+      "run": 2,
+      "traditional": {
+        "contentSize": 1268152,
+        "tokens": 317038,
+        "processingTimeMs": 283.98325099999784
+      },
+      "anno": {
+        "contentSize": 408,
+        "tokens": 102,
+        "processingTimeMs": 9234.415856000007,
+        "confidence": 0.62,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.96782720052487,
+        "sizePercent": 99.96782720052487
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.03217279947514178
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "category": "wikipedia",
+      "run": 3,
+      "traditional": {
+        "contentSize": 1268152,
+        "tokens": 317038,
+        "processingTimeMs": 273.2769419999968
+      },
+      "anno": {
+        "contentSize": 330,
+        "tokens": 83,
+        "processingTimeMs": 7277.166242000007,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97382017297612,
+        "sizePercent": 99.97397788277745
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.02617982702388988
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Machine_learning",
+      "category": "wikipedia",
+      "run": 1,
+      "traditional": {
+        "contentSize": 675309,
+        "tokens": 168828,
+        "processingTimeMs": 228.5274539999955
+      },
+      "anno": {
+        "contentSize": 371,
+        "tokens": 93,
+        "processingTimeMs": 6949.546395000012,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.94491435070012,
+        "sizePercent": 99.94506218634729
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.05508564929987917
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Machine_learning",
+      "category": "wikipedia",
+      "run": 2,
+      "traditional": {
+        "contentSize": 675309,
+        "tokens": 168828,
+        "processingTimeMs": 239.41924200000358
+      },
+      "anno": {
+        "contentSize": 463,
+        "tokens": 116,
+        "processingTimeMs": 7345.076316999999,
+        "confidence": 0.62,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.93129101807757,
+        "sizePercent": 99.9314387932043
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.06870898192242993
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Machine_learning",
+      "category": "wikipedia",
+      "run": 3,
+      "traditional": {
+        "contentSize": 675309,
+        "tokens": 168828,
+        "processingTimeMs": 234.34128400002373
+      },
+      "anno": {
+        "contentSize": 53463,
+        "tokens": 13366,
+        "processingTimeMs": 3757.4985420000157,
+        "confidence": 0.77,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 92.08306678986898,
+        "sizePercent": 92.08317969995957
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 7.91693321013102
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Climate_change",
+      "category": "wikipedia",
+      "run": 1,
+      "traditional": {
+        "contentSize": 1284965,
+        "tokens": 321242,
+        "processingTimeMs": 272.5919329999597
+      },
+      "anno": {
+        "contentSize": 381,
+        "tokens": 96,
+        "processingTimeMs": 7277.500997999974,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97011598732419,
+        "sizePercent": 99.97034938694829
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.029884012675802044
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Climate_change",
+      "category": "wikipedia",
+      "run": 2,
+      "traditional": {
+        "contentSize": 1284965,
+        "tokens": 321242,
+        "processingTimeMs": 277.6884129999671
+      },
+      "anno": {
+        "contentSize": 377,
+        "tokens": 95,
+        "processingTimeMs": 7099.136009000009,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.9704272791229,
+        "sizePercent": 99.97066067947375
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.029572720877095775
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Climate_change",
+      "category": "wikipedia",
+      "run": 3,
+      "traditional": {
+        "contentSize": 1284965,
+        "tokens": 321242,
+        "processingTimeMs": 275.1332290000282
+      },
+      "anno": {
+        "contentSize": 366,
+        "tokens": 92,
+        "processingTimeMs": 6940.722953000048,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97136115451902,
+        "sizePercent": 99.97151673391882
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.02863884548097696
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Quantum_computing",
+      "category": "wikipedia",
+      "run": 1,
+      "traditional": {
+        "contentSize": 655605,
+        "tokens": 163902,
+        "processingTimeMs": 229.85421900002984
+      },
+      "anno": {
+        "contentSize": 37788,
+        "tokens": 9447,
+        "processingTimeMs": 4177.391710000054,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 94.23618991836585,
+        "sizePercent": 94.23616354359714
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 5.763810081634147
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Quantum_computing",
+      "category": "wikipedia",
+      "run": 2,
+      "traditional": {
+        "contentSize": 655605,
+        "tokens": 163902,
+        "processingTimeMs": 231.64572200004477
+      },
+      "anno": {
+        "contentSize": 37788,
+        "tokens": 9447,
+        "processingTimeMs": 3652.458128999977,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 94.23618991836585,
+        "sizePercent": 94.23616354359714
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 5.763810081634147
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Quantum_computing",
+      "category": "wikipedia",
+      "run": 3,
+      "traditional": {
+        "contentSize": 655605,
+        "tokens": 163902,
+        "processingTimeMs": 240.65348400000948
+      },
+      "anno": {
+        "contentSize": 37788,
+        "tokens": 9447,
+        "processingTimeMs": 3910.530916000018,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 94.23618991836585,
+        "sizePercent": 94.23616354359714
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 5.763810081634147
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Blockchain",
+      "category": "wikipedia",
+      "run": 1,
+      "traditional": {
+        "contentSize": 578293,
+        "tokens": 144574,
+        "processingTimeMs": 230.94982199999504
+      },
+      "anno": {
+        "contentSize": 44437,
+        "tokens": 11110,
+        "processingTimeMs": 4021.995320999995,
+        "confidence": 0.77,
+        "semanticNodes": 93
+      },
+      "reduction": {
+        "tokenPercent": 92.3153540747299,
+        "sizePercent": 92.31583297740073
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 7.684645925270103
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Blockchain",
+      "category": "wikipedia",
+      "run": 2,
+      "traditional": {
+        "contentSize": 578293,
+        "tokens": 144574,
+        "processingTimeMs": 219.3366720000049
+      },
+      "anno": {
+        "contentSize": 44437,
+        "tokens": 11110,
+        "processingTimeMs": 3032.7038390000234,
+        "confidence": 0.77,
+        "semanticNodes": 93
+      },
+      "reduction": {
+        "tokenPercent": 92.3153540747299,
+        "sizePercent": 92.31583297740073
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 7.684645925270103
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Blockchain",
+      "category": "wikipedia",
+      "run": 3,
+      "traditional": {
+        "contentSize": 578293,
+        "tokens": 144574,
+        "processingTimeMs": 225.95981999998912
+      },
+      "anno": {
+        "contentSize": 44437,
+        "tokens": 11110,
+        "processingTimeMs": 3206.65581799997,
+        "confidence": 0.77,
+        "semanticNodes": 93
+      },
+      "reduction": {
+        "tokenPercent": 92.3153540747299,
+        "sizePercent": 92.31583297740073
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 7.684645925270103
+      }
+    },
+    {
+      "url": "https://www.ebay.com/itm/256473841777",
+      "category": "ecommerce",
+      "run": 2,
+      "traditional": {
+        "contentSize": 13067,
+        "tokens": 3267,
+        "processingTimeMs": 242.08098000002792
+      },
+      "anno": {
+        "contentSize": 178,
+        "tokens": 45,
+        "processingTimeMs": 27.046968999959063,
+        "confidence": 0.5900000000000001,
+        "semanticNodes": 7
+      },
+      "reduction": {
+        "tokenPercent": 98.62258953168043,
+        "sizePercent": 98.63778985229969
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.3774104683195594
+      }
+    },
+    {
+      "url": "https://www.ebay.com/itm/256473841777",
+      "category": "ecommerce",
+      "run": 3,
+      "traditional": {
+        "contentSize": 13060,
+        "tokens": 3265,
+        "processingTimeMs": 244.0405239999527
+      },
+      "anno": {
+        "contentSize": 178,
+        "tokens": 45,
+        "processingTimeMs": 23.73495600000024,
+        "confidence": 0.5900000000000001,
+        "semanticNodes": 7
+      },
+      "reduction": {
+        "tokenPercent": 98.6217457886677,
+        "sizePercent": 98.63705972434916
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.3782542113323124
+      }
+    },
+    {
+      "url": "https://www.bestbuy.com/",
+      "category": "ecommerce",
+      "run": 1,
+      "traditional": {
+        "contentSize": 492145,
+        "tokens": 123037,
+        "processingTimeMs": 1232.452787999995
+      },
+      "anno": {
+        "contentSize": 587,
+        "tokens": 147,
+        "processingTimeMs": 10081.405340000056,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.88052374488974,
+        "sizePercent": 99.88072620873929
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.1194762551102514
+      }
+    },
+    {
+      "url": "https://www.bestbuy.com/",
+      "category": "ecommerce",
+      "run": 2,
+      "traditional": {
+        "contentSize": 490990,
+        "tokens": 122748,
+        "processingTimeMs": 1774.5231469999999
+      },
+      "anno": {
+        "contentSize": 587,
+        "tokens": 147,
+        "processingTimeMs": 2049.1254569999874,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.88024244794212,
+        "sizePercent": 99.88044563025723
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.11975755205787468
+      }
+    },
+    {
+      "url": "https://www.bestbuy.com/",
+      "category": "ecommerce",
+      "run": 3,
+      "traditional": {
+        "contentSize": 492109,
+        "tokens": 123028,
+        "processingTimeMs": 2487.9656439999817
+      },
+      "anno": {
+        "contentSize": 587,
+        "tokens": 147,
+        "processingTimeMs": 2391.4978199999896,
+        "confidence": 0.67,
+        "semanticNodes": 18
+      },
+      "reduction": {
+        "tokenPercent": 99.88051500471438,
+        "sizePercent": 99.88071748332177
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.11948499528562602
+      }
+    },
+    {
+      "url": "https://www.target.com/",
+      "category": "ecommerce",
+      "run": 1,
+      "traditional": {
+        "contentSize": 461003,
+        "tokens": 115251,
+        "processingTimeMs": 843.399225000001
+      },
+      "anno": {
+        "contentSize": 563,
+        "tokens": 141,
+        "processingTimeMs": 2892.16809000005,
+        "confidence": 0.67,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.87765832834422,
+        "sizePercent": 99.87787498129079
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.1223416716557774
+      }
+    },
+    {
+      "url": "https://www.target.com/",
+      "category": "ecommerce",
+      "run": 2,
+      "traditional": {
+        "contentSize": 460013,
+        "tokens": 115004,
+        "processingTimeMs": 588.8150209999876
+      },
+      "anno": {
+        "contentSize": 563,
+        "tokens": 141,
+        "processingTimeMs": 2722.317098999978,
+        "confidence": 0.67,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.87739556884978,
+        "sizePercent": 99.8776121544391
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.12260443115022088
+      }
+    },
+    {
+      "url": "https://www.target.com/",
+      "category": "ecommerce",
+      "run": 3,
+      "traditional": {
+        "contentSize": 460549,
+        "tokens": 115138,
+        "processingTimeMs": 696.1883380000363
+      },
+      "anno": {
+        "contentSize": 563,
+        "tokens": 141,
+        "processingTimeMs": 4130.584867000056,
+        "confidence": 0.67,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.87753825843771,
+        "sizePercent": 99.87775459288805
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.12246174156229916
+      }
+    },
+    {
+      "url": "https://martinfowler.com/",
+      "category": "tech-blog",
+      "run": 1,
+      "traditional": {
+        "contentSize": 35299,
+        "tokens": 8825,
+        "processingTimeMs": 272.64509199996246
+      },
+      "anno": {
+        "contentSize": 12541,
+        "tokens": 3136,
+        "processingTimeMs": 3192.0200010000262,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 59
+      },
+      "reduction": {
+        "tokenPercent": 64.46458923512748,
+        "sizePercent": 64.47208136207824
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 35.53541076487252
+      }
+    },
+    {
+      "url": "https://martinfowler.com/",
+      "category": "tech-blog",
+      "run": 2,
+      "traditional": {
+        "contentSize": 35299,
+        "tokens": 8825,
+        "processingTimeMs": 129.56621199997608
+      },
+      "anno": {
+        "contentSize": 1127,
+        "tokens": 282,
+        "processingTimeMs": 6788.612007000018,
+        "confidence": 0.67,
+        "semanticNodes": 6
+      },
+      "reduction": {
+        "tokenPercent": 96.80453257790369,
+        "sizePercent": 96.80727499362588
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 3.1954674220963173
+      }
+    },
+    {
+      "url": "https://martinfowler.com/",
+      "category": "tech-blog",
+      "run": 3,
+      "traditional": {
+        "contentSize": 35299,
+        "tokens": 8825,
+        "processingTimeMs": 114.37113600003067
+      },
+      "anno": {
+        "contentSize": 12541,
+        "tokens": 3136,
+        "processingTimeMs": 1928.786770000006,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 59
+      },
+      "reduction": {
+        "tokenPercent": 64.46458923512748,
+        "sizePercent": 64.47208136207824
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 35.53541076487252
+      }
+    },
+    {
+      "url": "https://www.joelonsoftware.com/",
+      "category": "tech-blog",
+      "run": 1,
+      "traditional": {
+        "contentSize": 80821,
+        "tokens": 20206,
+        "processingTimeMs": 179.37531400000444
+      },
+      "anno": {
+        "contentSize": 690,
+        "tokens": 173,
+        "processingTimeMs": 3792.321874999965,
+        "confidence": 0.62,
+        "semanticNodes": 4
+      },
+      "reduction": {
+        "tokenPercent": 99.14381866772246,
+        "sizePercent": 99.14626149144405
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8561813322775413
+      }
+    },
+    {
+      "url": "https://www.joelonsoftware.com/",
+      "category": "tech-blog",
+      "run": 2,
+      "traditional": {
+        "contentSize": 80820,
+        "tokens": 20205,
+        "processingTimeMs": 71.07587399997283
+      },
+      "anno": {
+        "contentSize": 690,
+        "tokens": 173,
+        "processingTimeMs": 2798.037490000017,
+        "confidence": 0.62,
+        "semanticNodes": 4
+      },
+      "reduction": {
+        "tokenPercent": 99.14377629299679,
+        "sizePercent": 99.14625092798812
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8562237070032169
+      }
+    },
+    {
+      "url": "https://www.joelonsoftware.com/",
+      "category": "tech-blog",
+      "run": 3,
+      "traditional": {
+        "contentSize": 80820,
+        "tokens": 20205,
+        "processingTimeMs": 72.4481290000258
+      },
+      "anno": {
+        "contentSize": 690,
+        "tokens": 173,
+        "processingTimeMs": 2629.3823529999936,
+        "confidence": 0.62,
+        "semanticNodes": 4
+      },
+      "reduction": {
+        "tokenPercent": 99.14377629299679,
+        "sizePercent": 99.14625092798812
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8562237070032169
+      }
+    },
+    {
+      "url": "https://blog.codinghorror.com/",
+      "category": "tech-blog",
+      "run": 1,
+      "traditional": {
+        "contentSize": 84058,
+        "tokens": 21015,
+        "processingTimeMs": 179.63581800000975
+      },
+      "anno": {
+        "contentSize": 20215,
+        "tokens": 5054,
+        "processingTimeMs": 7992.630173999991,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 68
+      },
+      "reduction": {
+        "tokenPercent": 75.95051153937663,
+        "sizePercent": 75.95112898236933
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 24.049488460623365
+      }
+    },
+    {
+      "url": "https://blog.codinghorror.com/",
+      "category": "tech-blog",
+      "run": 2,
+      "traditional": {
+        "contentSize": 84058,
+        "tokens": 21015,
+        "processingTimeMs": 82.53651000000536
+      },
+      "anno": {
+        "contentSize": 20215,
+        "tokens": 5054,
+        "processingTimeMs": 1708.2822610000148,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 68
+      },
+      "reduction": {
+        "tokenPercent": 75.95051153937663,
+        "sizePercent": 75.95112898236933
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 24.049488460623365
+      }
+    },
+    {
+      "url": "https://blog.codinghorror.com/",
+      "category": "tech-blog",
+      "run": 3,
+      "traditional": {
+        "contentSize": 84058,
+        "tokens": 21015,
+        "processingTimeMs": 35.02502900001127
+      },
+      "anno": {
+        "contentSize": 20215,
+        "tokens": 5054,
+        "processingTimeMs": 2588.8663459999952,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 68
+      },
+      "reduction": {
+        "tokenPercent": 75.95051153937663,
+        "sizePercent": 75.95112898236933
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 24.049488460623365
+      }
+    },
+    {
+      "url": "https://paulgraham.com/articles.html",
+      "category": "tech-blog",
+      "run": 1,
+      "traditional": {
+        "contentSize": 116999,
+        "tokens": 29250,
+        "processingTimeMs": 273.97840399999404
+      },
+      "anno": {
+        "contentSize": 28,
+        "tokens": 7,
+        "processingTimeMs": 3100.834589999984,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97606837606837,
+        "sizePercent": 99.97606817152284
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.023931623931623933
+      }
+    },
+    {
+      "url": "https://paulgraham.com/articles.html",
+      "category": "tech-blog",
+      "run": 2,
+      "traditional": {
+        "contentSize": 116999,
+        "tokens": 29250,
+        "processingTimeMs": 175.48077700001886
+      },
+      "anno": {
+        "contentSize": 28,
+        "tokens": 7,
+        "processingTimeMs": 2856.512939999986,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97606837606837,
+        "sizePercent": 99.97606817152284
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.023931623931623933
+      }
+    },
+    {
+      "url": "https://paulgraham.com/articles.html",
+      "category": "tech-blog",
+      "run": 3,
+      "traditional": {
+        "contentSize": 116999,
+        "tokens": 29250,
+        "processingTimeMs": 159.64022000000114
+      },
+      "anno": {
+        "contentSize": 28,
+        "tokens": 7,
+        "processingTimeMs": 2864.9972089999937,
+        "confidence": 0.54,
+        "semanticNodes": 1
+      },
+      "reduction": {
+        "tokenPercent": 99.97606837606837,
+        "sizePercent": 99.97606817152284
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.023931623931623933
+      }
+    },
+    {
+      "url": "https://arstechnica.com/",
+      "category": "tech-blog",
+      "run": 1,
+      "traditional": {
+        "contentSize": 393510,
+        "tokens": 98378,
+        "processingTimeMs": 218.76379200001247
+      },
+      "anno": {
+        "contentSize": 1084,
+        "tokens": 271,
+        "processingTimeMs": 28907.724266999983,
+        "confidence": 0.77,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.72453190754031,
+        "sizePercent": 99.72453050748392
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.2754680924596963
+      }
+    },
+    {
+      "url": "https://arstechnica.com/",
+      "category": "tech-blog",
+      "run": 2,
+      "traditional": {
+        "contentSize": 393511,
+        "tokens": 98378,
+        "processingTimeMs": 177.02885399997467
+      },
+      "anno": {
+        "contentSize": 1084,
+        "tokens": 271,
+        "processingTimeMs": 27914.576992999995,
+        "confidence": 0.77,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.72453190754031,
+        "sizePercent": 99.72453120751389
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.2754680924596963
+      }
+    },
+    {
+      "url": "https://arstechnica.com/",
+      "category": "tech-blog",
+      "run": 3,
+      "traditional": {
+        "contentSize": 393567,
+        "tokens": 98392,
+        "processingTimeMs": 184.53135599999223
+      },
+      "anno": {
+        "contentSize": 1084,
+        "tokens": 271,
+        "processingTimeMs": 27671.73912500008,
+        "confidence": 0.77,
+        "semanticNodes": 13
+      },
+      "reduction": {
+        "tokenPercent": 99.72457110334173,
+        "sizePercent": 99.72457040351452
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.2754288966582649
+      }
+    },
+    {
+      "url": "https://github.com/microsoft/vscode",
+      "category": "github",
+      "run": 1,
+      "traditional": {
+        "contentSize": 380944,
+        "tokens": 95236,
+        "processingTimeMs": 720.9309720000019
+      },
+      "anno": {
+        "contentSize": 4514,
+        "tokens": 1129,
+        "processingTimeMs": 3621.3932460000506,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 44
+      },
+      "reduction": {
+        "tokenPercent": 98.81452391952624,
+        "sizePercent": 98.81504893107649
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.1854760804737705
+      }
+    },
+    {
+      "url": "https://github.com/microsoft/vscode",
+      "category": "github",
+      "run": 2,
+      "traditional": {
+        "contentSize": 380944,
+        "tokens": 95236,
+        "processingTimeMs": 212.0848910000641
+      },
+      "anno": {
+        "contentSize": 4514,
+        "tokens": 1129,
+        "processingTimeMs": 1253.235541000031,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 44
+      },
+      "reduction": {
+        "tokenPercent": 98.81452391952624,
+        "sizePercent": 98.81504893107649
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.1854760804737705
+      }
+    },
+    {
+      "url": "https://github.com/microsoft/vscode",
+      "category": "github",
+      "run": 3,
+      "traditional": {
+        "contentSize": 380944,
+        "tokens": 95236,
+        "processingTimeMs": 343.6729129999876
+      },
+      "anno": {
+        "contentSize": 4514,
+        "tokens": 1129,
+        "processingTimeMs": 1245.5237359999446,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 44
+      },
+      "reduction": {
+        "tokenPercent": 98.81452391952624,
+        "sizePercent": 98.81504893107649
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.1854760804737705
+      }
+    },
+    {
+      "url": "https://github.com/facebook/react",
+      "category": "github",
+      "run": 1,
+      "traditional": {
+        "contentSize": 368548,
+        "tokens": 92137,
+        "processingTimeMs": 514.306418000022
+      },
+      "anno": {
+        "contentSize": 2970,
+        "tokens": 743,
+        "processingTimeMs": 1854.5804470001021,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 40
+      },
+      "reduction": {
+        "tokenPercent": 99.19359215081889,
+        "sizePercent": 99.19413482097312
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8064078491811109
+      }
+    },
+    {
+      "url": "https://github.com/facebook/react",
+      "category": "github",
+      "run": 2,
+      "traditional": {
+        "contentSize": 368548,
+        "tokens": 92137,
+        "processingTimeMs": 105.13980899995659
+      },
+      "anno": {
+        "contentSize": 2970,
+        "tokens": 743,
+        "processingTimeMs": 795.0982249999652,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 40
+      },
+      "reduction": {
+        "tokenPercent": 99.19359215081889,
+        "sizePercent": 99.19413482097312
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8064078491811109
+      }
+    },
+    {
+      "url": "https://github.com/facebook/react",
+      "category": "github",
+      "run": 3,
+      "traditional": {
+        "contentSize": 368548,
+        "tokens": 92137,
+        "processingTimeMs": 72.67420499993023
+      },
+      "anno": {
+        "contentSize": 2970,
+        "tokens": 743,
+        "processingTimeMs": 620.8442050000886,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 40
+      },
+      "reduction": {
+        "tokenPercent": 99.19359215081889,
+        "sizePercent": 99.19413482097312
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.8064078491811109
+      }
+    },
+    {
+      "url": "https://github.com/tensorflow/tensorflow",
+      "category": "github",
+      "run": 1,
+      "traditional": {
+        "contentSize": 400320,
+        "tokens": 100080,
+        "processingTimeMs": 706.3172820000909
+      },
+      "anno": {
+        "contentSize": 2941,
+        "tokens": 736,
+        "processingTimeMs": 2365.0779679999687,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 46
+      },
+      "reduction": {
+        "tokenPercent": 99.26458832933653,
+        "sizePercent": 99.26533772981615
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.7354116706634692
+      }
+    },
+    {
+      "url": "https://github.com/tensorflow/tensorflow",
+      "category": "github",
+      "run": 2,
+      "traditional": {
+        "contentSize": 400320,
+        "tokens": 100080,
+        "processingTimeMs": 84.09491300000809
+      },
+      "anno": {
+        "contentSize": 2941,
+        "tokens": 736,
+        "processingTimeMs": 681.1645649999846,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 46
+      },
+      "reduction": {
+        "tokenPercent": 99.26458832933653,
+        "sizePercent": 99.26533772981615
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.7354116706634692
+      }
+    },
+    {
+      "url": "https://github.com/tensorflow/tensorflow",
+      "category": "github",
+      "run": 3,
+      "traditional": {
+        "contentSize": 400320,
+        "tokens": 100080,
+        "processingTimeMs": 76.42628700006753
+      },
+      "anno": {
+        "contentSize": 2941,
+        "tokens": 736,
+        "processingTimeMs": 1503.4149089999264,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 46
+      },
+      "reduction": {
+        "tokenPercent": 99.26458832933653,
+        "sizePercent": 99.26533772981615
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 0.7354116706634692
+      }
+    },
+    {
+      "url": "https://github.com/anthropics/anthropic-sdk-python",
+      "category": "github",
+      "run": 1,
+      "traditional": {
+        "contentSize": 564907,
+        "tokens": 141227,
+        "processingTimeMs": 514.3063290000428
+      },
+      "anno": {
+        "contentSize": 8497,
+        "tokens": 2125,
+        "processingTimeMs": 2739.6658210000023,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.49533021306124,
+        "sizePercent": 98.49585861035534
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.5046697869387582
+      }
+    },
+    {
+      "url": "https://github.com/anthropics/anthropic-sdk-python",
+      "category": "github",
+      "run": 2,
+      "traditional": {
+        "contentSize": 564907,
+        "tokens": 141227,
+        "processingTimeMs": 218.2465899999952
+      },
+      "anno": {
+        "contentSize": 8497,
+        "tokens": 2125,
+        "processingTimeMs": 1424.3847130000358,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.49533021306124,
+        "sizePercent": 98.49585861035534
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.5046697869387582
+      }
+    },
+    {
+      "url": "https://github.com/anthropics/anthropic-sdk-python",
+      "category": "github",
+      "run": 3,
+      "traditional": {
+        "contentSize": 564903,
+        "tokens": 141226,
+        "processingTimeMs": 120.60481000004802
+      },
+      "anno": {
+        "contentSize": 8497,
+        "tokens": 2125,
+        "processingTimeMs": 1429.9063639999367,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.49531955872149,
+        "sizePercent": 98.49584795973823
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.5046804412785182
+      }
+    },
+    {
+      "url": "https://github.com/openai/openai-python",
+      "category": "github",
+      "run": 1,
+      "traditional": {
+        "contentSize": 570935,
+        "tokens": 142734,
+        "processingTimeMs": 521.4610350000439
+      },
+      "anno": {
+        "contentSize": 9320,
+        "tokens": 2330,
+        "processingTimeMs": 2418.5644709999906,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.36759286504967,
+        "sizePercent": 98.36759000586757
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.6324071349503273
+      }
+    },
+    {
+      "url": "https://github.com/openai/openai-python",
+      "category": "github",
+      "run": 2,
+      "traditional": {
+        "contentSize": 570935,
+        "tokens": 142734,
+        "processingTimeMs": 77.84467400005087
+      },
+      "anno": {
+        "contentSize": 9320,
+        "tokens": 2330,
+        "processingTimeMs": 1430.1683100000955,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.36759286504967,
+        "sizePercent": 98.36759000586757
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.6324071349503273
+      }
+    },
+    {
+      "url": "https://github.com/openai/openai-python",
+      "category": "github",
+      "run": 3,
+      "traditional": {
+        "contentSize": 570931,
+        "tokens": 142733,
+        "processingTimeMs": 81.56771299999673
+      },
+      "anno": {
+        "contentSize": 9320,
+        "tokens": 2330,
+        "processingTimeMs": 1050.0547909999732,
+        "confidence": 0.8200000000000001,
+        "semanticNodes": 100
+      },
+      "reduction": {
+        "tokenPercent": 98.36758142826116,
+        "sizePercent": 98.367578569039
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 1.632418571738841
+      }
+    },
+    {
+      "url": "https://example.com",
+      "category": "simple",
+      "run": 1,
+      "traditional": {
+        "contentSize": 1256,
+        "tokens": 314,
+        "processingTimeMs": 293.50969299999997
+      },
+      "anno": {
+        "contentSize": 177,
+        "tokens": 45,
+        "processingTimeMs": 2414.6343160000397,
+        "confidence": 0.54,
+        "semanticNodes": 2
+      },
+      "reduction": {
+        "tokenPercent": 85.6687898089172,
+        "sizePercent": 85.90764331210191
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 14.331210191082802
+      }
+    },
+    {
+      "url": "https://example.com",
+      "category": "simple",
+      "run": 2,
+      "traditional": {
+        "contentSize": 1256,
+        "tokens": 314,
+        "processingTimeMs": 77.70433600002434
+      },
+      "anno": {
+        "contentSize": 177,
+        "tokens": 45,
+        "processingTimeMs": 4094.896880000015,
+        "confidence": 0.54,
+        "semanticNodes": 2
+      },
+      "reduction": {
+        "tokenPercent": 85.6687898089172,
+        "sizePercent": 85.90764331210191
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 14.331210191082802
+      }
+    },
+    {
+      "url": "https://example.com",
+      "category": "simple",
+      "run": 3,
+      "traditional": {
+        "contentSize": 1256,
+        "tokens": 314,
+        "processingTimeMs": 143.1174180000089
+      },
+      "anno": {
+        "contentSize": 177,
+        "tokens": 45,
+        "processingTimeMs": 561.7929000000004,
+        "confidence": 0.54,
+        "semanticNodes": 2
+      },
+      "reduction": {
+        "tokenPercent": 85.6687898089172,
+        "sizePercent": 85.90764331210191
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 14.331210191082802
+      }
+    },
+    {
+      "url": "https://info.cern.ch/",
+      "category": "simple",
+      "run": 1,
+      "traditional": {
+        "contentSize": 646,
+        "tokens": 162,
+        "processingTimeMs": 798.8875460000709
+      },
+      "anno": {
+        "contentSize": 252,
+        "tokens": 63,
+        "processingTimeMs": 4121.140377999982,
+        "confidence": 0.5900000000000001,
+        "semanticNodes": 6
+      },
+      "reduction": {
+        "tokenPercent": 61.111111111111114,
+        "sizePercent": 60.99071207430341
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 38.88888888888889
+      }
+    },
+    {
+      "url": "https://info.cern.ch/",
+      "category": "simple",
+      "run": 2,
+      "traditional": {
+        "contentSize": 646,
+        "tokens": 162,
+        "processingTimeMs": 414.9581280000275
+      },
+      "anno": {
+        "contentSize": 252,
+        "tokens": 63,
+        "processingTimeMs": 3666.142327999929,
+        "confidence": 0.5900000000000001,
+        "semanticNodes": 6
+      },
+      "reduction": {
+        "tokenPercent": 61.111111111111114,
+        "sizePercent": 60.99071207430341
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 38.88888888888889
+      }
+    },
+    {
+      "url": "https://info.cern.ch/",
+      "category": "simple",
+      "run": 3,
+      "traditional": {
+        "contentSize": 646,
+        "tokens": 162,
+        "processingTimeMs": 568.5775489999214
+      },
+      "anno": {
+        "contentSize": 252,
+        "tokens": 63,
+        "processingTimeMs": 4068.805723000085,
+        "confidence": 0.5900000000000001,
+        "semanticNodes": 6
+      },
+      "reduction": {
+        "tokenPercent": 61.111111111111114,
+        "sizePercent": 60.99071207430341
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 38.88888888888889
+      }
+    },
+    {
+      "url": "https://justinjackson.ca/words.html",
+      "category": "simple",
+      "run": 1,
+      "traditional": {
+        "contentSize": 8732,
+        "tokens": 2183,
+        "processingTimeMs": 366.2613269999856
+      },
+      "anno": {
+        "contentSize": 4042,
+        "tokens": 1011,
+        "processingTimeMs": 2882.477288000053,
+        "confidence": 0.77,
+        "semanticNodes": 49
+      },
+      "reduction": {
+        "tokenPercent": 53.68758589097572,
+        "sizePercent": 53.71049015116812
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 46.31241410902428
+      }
+    },
+    {
+      "url": "https://justinjackson.ca/words.html",
+      "category": "simple",
+      "run": 2,
+      "traditional": {
+        "contentSize": 8732,
+        "tokens": 2183,
+        "processingTimeMs": 1078.787245000014
+      },
+      "anno": {
+        "contentSize": 4042,
+        "tokens": 1011,
+        "processingTimeMs": 2901.1714870000724,
+        "confidence": 0.77,
+        "semanticNodes": 49
+      },
+      "reduction": {
+        "tokenPercent": 53.68758589097572,
+        "sizePercent": 53.71049015116812
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 46.31241410902428
+      }
+    },
+    {
+      "url": "https://justinjackson.ca/words.html",
+      "category": "simple",
+      "run": 3,
+      "traditional": {
+        "contentSize": 8732,
+        "tokens": 2183,
+        "processingTimeMs": 511.2839420000091
+      },
+      "anno": {
+        "contentSize": 4042,
+        "tokens": 1011,
+        "processingTimeMs": 10279.58073799999,
+        "confidence": 0.77,
+        "semanticNodes": 49
+      },
+      "reduction": {
+        "tokenPercent": 53.68758589097572,
+        "sizePercent": 53.71049015116812
+      },
+      "quality": {
+        "annoScore": 20,
+        "traditionalScore": 75,
+        "informationPreservation": 46.31241410902428
+      }
+    }
+  ]
+}

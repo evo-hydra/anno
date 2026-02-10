@@ -1,0 +1,187 @@
+{
+  "timestamp": "2025-10-06T15:55:53.407Z",
+  "config": {
+    "annoServerUrl": "http://localhost:18080",
+    "testUrls": [
+      "https://example.com",
+      "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "https://httpbin.org/html",
+      "https://www.bbc.com/news/technology",
+      "https://nodejs.org/en/docs"
+    ],
+    "outputFile": "benchmarks/reports/independent-verification-1759766096188.json",
+    "useCachedResults": false
+  },
+  "results": [
+    {
+      "url": "https://example.com",
+      "traditional": {
+        "sizeBytes": 1256,
+        "tokens": 314,
+        "fetchTimeMs": 238.572355,
+        "content": "<!doctype html>\n<html>\n<head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\" />\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n        \n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>    \n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domai"
+      },
+      "anno": {
+        "sizeBytes": 177,
+        "tokens": 45,
+        "fetchTimeMs": 9407.21268,
+        "content": "This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.\nMore information...\n",
+        "confidence": 0.54
+      },
+      "comparison": {
+        "tokenReductionPercent": 85.6687898089172,
+        "sizeReductionPercent": 85.90764331210191,
+        "speedChangePercent": -3843.1277274351423
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:55:06.336Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-2fbfb59b",
+          "anno": "747e5ae2"
+        }
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "traditional": {
+        "sizeBytes": 1268141,
+        "tokens": 317036,
+        "fetchTimeMs": 489.902904999999,
+        "content": "<!DOCTYPE html>\n<html class=\"client-nojs vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-1 vector-feature-appearance-pinned-clientpref-1 vector-feature-night-mode-enabled skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available\" lang=\"en\" dir=\"ltr\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Artificial intelligence - Wikipedia</title>\n<script>(function(){var className=\"client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled ve"
+      },
+      "anno": {
+        "sizeBytes": 345,
+        "tokens": 87,
+        "fetchTimeMs": 9347.459757,
+        "content": "Artificial intelligence is the development of computer systems able to perform tasks that typically require human intelligence, such as visual perception, speech recognition, decision-making, and language translation. The field of artificial intelligence involves a range of disciplines including computer science, mathematics, and engineering.\n",
+        "confidence": 0.54
+      },
+      "comparison": {
+        "tokenReductionPercent": 99.97255832145245,
+        "sizeReductionPercent": 99.97279482328858,
+        "speedChangePercent": -1808.022928951609
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:55:17.683Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-4a0ab1",
+          "anno": "493282ca"
+        }
+      }
+    },
+    {
+      "url": "https://www.bbc.com/news/technology",
+      "traditional": {
+        "sizeBytes": 483508,
+        "tokens": 120877,
+        "fetchTimeMs": 377.0417699999998,
+        "content": "<!DOCTYPE html><html lang=\"en-GB\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width\"/><title>BBC Innovation | Technology, Health, Environment, AI</title><meta name=\"page.section\" content=\"Innovation\"/><meta property=\"og:title\" content=\"BBC Innovation | Technology, Health, Environment, AI\"/><meta name=\"twitter:title\" content=\"BBC Innovation | Technology, Health, Environment, AI\"/><meta name=\"description\" content=\"BBC Innovation brings you the latest in Technology news and coverage from around the world, including health, environment, AI, and more\"/><meta property=\"og:description\" content=\"BBC Innovation brings you the latest in Technology news and coverage from around the world, including health, environment, AI, and more\"/><meta name=\"twitter:description\" content=\"BBC Innovation brings you the latest in Technology news and coverage from around the world, including health, environment, AI, and more\"/><meta name=\"msapplication-TileColor\" content=\"#da532c\"/><m"
+      },
+      "anno": {
+        "sizeBytes": 2177,
+        "tokens": 545,
+        "fetchTimeMs": 4016.9271139999983,
+        "content": "Health Decoded\nExplore More\nThe health benefits of drinking matcha tea\n24 Jul 2025\nHealth Decoded\nWhy walking backwards can be good for your health\n10 Jul 2025\nHealth Decoded\nThe hidden calories we consume without knowing\n26 Jun 2025\nHealth Decoded\nSimple tips for cutting back on ultra-processed foods\n12 Jun 2025\nHealth Decoded\nAn immersive therapy that can improve your sleep\n29 May 2025\nHealth Decoded\nEight simple steps to help you live longer\n15 May 2025\nHealth Decoded\nHow your 'second brain' changes the way you think\n1 May 2025\nHealth Decoded\nWhy you might be younger than you think you are\n16 Apr 2025\nHealth Decoded\nThe 'healthier' sweetener that could replace sugar\n3 Apr 2025\nHealth Decoded\nA powerful way to improve your fitness\n20 Mar 2025\nHealth Decoded\nWhy drinking coffee can benefit your health\n6 Mar 2025\nHealth Decoded\nHow to change your personality traits with intention\n20 Feb 2025\nHealth Decoded\nHow you can think yourself well\n6 Feb 2025\nHealth Decoded\nWhy being a 'loner' co",
+        "confidence": 0.77
+      },
+      "comparison": {
+        "tokenReductionPercent": 99.54912845289013,
+        "sizeReductionPercent": 99.54974891832194,
+        "speedChangePercent": -965.3798686548707
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:55:24.816Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-1d532ece",
+          "anno": "789aefe6"
+        }
+      }
+    },
+    {
+      "url": "https://nodejs.org/en/docs",
+      "traditional": {
+        "sizeBytes": 14135,
+        "tokens": 3534,
+        "fetchTimeMs": 384.93195800000103,
+        "content": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\">\n  <meta name=\"viewport\" content=\"width=device-width\">\n  <meta name=\"nodejs.org:node-version\" content=\"v24.9.0\">\n  <title>Index | Node.js v24.9.0 Documentation</title>\n  <link rel=\"stylesheet\" href=\"https://fonts.googleapis.com/css?family=Lato:400,700,400italic&display=fallback\">\n  <link rel=\"stylesheet\" href=\"assets/style.css\">\n  <link rel=\"stylesheet\" href=\"assets/hljs.css\">\n  <link rel=\"canonical\" href=\"https://nodejs.org/api/index.html\">\n  <script async defer src=\"assets/api.js\" type=\"text/javascript\"></script>\n  <script>\n      const storedTheme = localStorage.getItem('theme');\n\n      // Follow operating system theme preference\n      if (storedTheme === null && window.matchMedia) {\n        const mq = window.matchMedia('(prefers-color-scheme: dark)');\n        if (mq.matches) {\n          document.documentElement.classList.add('dark-mode');\n        }\n      } else if (storedTheme === 'dark') {\n        document.documentElem"
+      },
+      "anno": {
+        "sizeBytes": 1514,
+        "tokens": 379,
+        "fetchTimeMs": 25704.486092,
+        "content": "About this documentation\nUsage and example\nAssertion testing\nAsynchronous context tracking\nAsync hooks\nBuffer\nC++ addons\nC/C++ addons with Node-API\nC++ embedder API\nChild processes\nCluster\nCommand-line options\nConsole\nCrypto\nDebugger\nDeprecated APIs\nDiagnostics Channel\nDNS\nDomain\nEnvironment Variables\nErrors\nEvents\nFile system\nGlobals\nHTTP\nHTTP/2\nHTTPS\nInspector\nInternationalization\nModules: CommonJS modules\nModules: ECMAScript modules\nModules: node:module API\nModules: Packages\nModules: TypeScript\nNet\nOS\nPath\nPerformance hooks\nPermissions\nProcess\nPunycode\nQuery strings\nReadline\nREPL\nReport\nSingle executable applications\nSQLite\nStream\nString decoder\nTest runner\nTimers\nTLS/SSL\nTrace events\nTTY\nUDP/datagram\nURL\nUtilities\nV8\nVM\nWASI\nWeb Crypto API\nWeb Streams API\nWorker threads\nZlib\nCode repository and issue tracker\nNode.js v24.9.0\nOther versions\n      \n      24.x\n23.x\n22.x LTS\n21.x\n20.x LTS\n19.x\n18.x\n17.x\n16.x\n15.x\n14.x\n13.x\n12.x\n11.x\n10.x\n9.x\n8.x\n7.x\n6.x\n5.x\n4.x\n0.12.x\n0.10.x\n24.x\n23.x\n2",
+        "confidence": 0.77
+      },
+      "comparison": {
+        "tokenReductionPercent": 89.27560837577816,
+        "sizeReductionPercent": 89.28899893880438,
+        "speedChangePercent": -6577.670055132166
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:55:52.406Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "2141c49b",
+          "anno": "57e31b99"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "totalTests": 4,
+    "avgTokenReduction": 93.61652123975948,
+    "stdDevTokenReduction": 6.277041403372746,
+    "avgSizeReduction": 93.6797964981292,
+    "independentlyVerified": true
+  },
+  "auditTrail": [
+    "[2025-10-06T15:54:56.188Z] 🔍 INDEPENDENT VERIFICATION STARTED",
+    "[2025-10-06T15:54:56.189Z] Configuration: {\n  \"annoServerUrl\": \"http://localhost:18080\",\n  \"testUrls\": [\n    \"https://example.com\",\n    \"https://en.wikipedia.org/wiki/Artificial_intelligence\",\n    \"https://httpbin.org/html\",\n    \"https://www.bbc.com/news/technology\",\n    \"https://nodejs.org/en/docs\"\n  ],\n  \"outputFile\": \"benchmarks/reports/independent-verification-1759766096188.json\",\n  \"useCachedResults\": false\n}",
+    "[2025-10-06T15:54:56.189Z] Total URLs to verify: 5\n",
+    "[2025-10-06T15:54:56.189Z] \n[1/5] Processing https://example.com",
+    "[2025-10-06T15:54:56.189Z] \n=== VERIFYING: https://example.com ===",
+    "[2025-10-06T15:54:56.189Z] [TRADITIONAL] Fetching https://example.com",
+    "[2025-10-06T15:54:56.428Z] [TRADITIONAL] Success: 1256 bytes, 314 tokens, 239ms",
+    "[2025-10-06T15:54:56.928Z] [NEUROSURF] Fetching https://example.com",
+    "[2025-10-06T15:55:06.336Z] [NEUROSURF] Success: 177 bytes, 45 tokens, 9407ms, confidence: 0.54%",
+    "[2025-10-06T15:55:06.336Z] [COMPARISON] Token reduction: 85.7%",
+    "[2025-10-06T15:55:06.336Z] [COMPARISON] Size reduction: 85.9%",
+    "[2025-10-06T15:55:06.336Z] [VERIFICATION] Checksums: traditional=-2fbfb59b, anno=747e5ae2",
+    "[2025-10-06T15:55:07.336Z] \n[2/5] Processing https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:55:07.337Z] \n=== VERIFYING: https://en.wikipedia.org/wiki/Artificial_intelligence ===",
+    "[2025-10-06T15:55:07.337Z] [TRADITIONAL] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:55:07.827Z] [TRADITIONAL] Success: 1268141 bytes, 317036 tokens, 490ms",
+    "[2025-10-06T15:55:08.328Z] [NEUROSURF] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:55:17.675Z] [NEUROSURF] Success: 345 bytes, 87 tokens, 9347ms, confidence: 0.54%",
+    "[2025-10-06T15:55:17.683Z] [COMPARISON] Token reduction: 100.0%",
+    "[2025-10-06T15:55:17.683Z] [COMPARISON] Size reduction: 100.0%",
+    "[2025-10-06T15:55:17.683Z] [VERIFICATION] Checksums: traditional=-4a0ab1, anno=493282ca",
+    "[2025-10-06T15:55:18.684Z] \n[3/5] Processing https://httpbin.org/html",
+    "[2025-10-06T15:55:18.684Z] \n=== VERIFYING: https://httpbin.org/html ===",
+    "[2025-10-06T15:55:18.684Z] [TRADITIONAL] Fetching https://httpbin.org/html",
+    "[2025-10-06T15:55:18.919Z] [TRADITIONAL] Error: HTTP 503",
+    "[2025-10-06T15:55:18.919Z] [ERROR] Verification failed: HTTP 503",
+    "[2025-10-06T15:55:19.920Z] \n[4/5] Processing https://www.bbc.com/news/technology",
+    "[2025-10-06T15:55:19.920Z] \n=== VERIFYING: https://www.bbc.com/news/technology ===",
+    "[2025-10-06T15:55:19.920Z] [TRADITIONAL] Fetching https://www.bbc.com/news/technology",
+    "[2025-10-06T15:55:20.297Z] [TRADITIONAL] Success: 483508 bytes, 120877 tokens, 377ms",
+    "[2025-10-06T15:55:20.797Z] [NEUROSURF] Fetching https://www.bbc.com/news/technology",
+    "[2025-10-06T15:55:24.815Z] [NEUROSURF] Success: 2177 bytes, 545 tokens, 4017ms, confidence: 0.77%",
+    "[2025-10-06T15:55:24.816Z] [COMPARISON] Token reduction: 99.5%",
+    "[2025-10-06T15:55:24.816Z] [COMPARISON] Size reduction: 99.5%",
+    "[2025-10-06T15:55:24.816Z] [VERIFICATION] Checksums: traditional=-1d532ece, anno=789aefe6",
+    "[2025-10-06T15:55:25.817Z] \n[5/5] Processing https://nodejs.org/en/docs",
+    "[2025-10-06T15:55:25.817Z] \n=== VERIFYING: https://nodejs.org/en/docs ===",
+    "[2025-10-06T15:55:25.817Z] [TRADITIONAL] Fetching https://nodejs.org/en/docs",
+    "[2025-10-06T15:55:26.202Z] [TRADITIONAL] Success: 14135 bytes, 3534 tokens, 385ms",
+    "[2025-10-06T15:55:26.702Z] [NEUROSURF] Fetching https://nodejs.org/en/docs",
+    "[2025-10-06T15:55:52.406Z] [NEUROSURF] Success: 1514 bytes, 379 tokens, 25704ms, confidence: 0.77%",
+    "[2025-10-06T15:55:52.406Z] [COMPARISON] Token reduction: 89.3%",
+    "[2025-10-06T15:55:52.406Z] [COMPARISON] Size reduction: 89.3%",
+    "[2025-10-06T15:55:52.406Z] [VERIFICATION] Checksums: traditional=2141c49b, anno=57e31b99",
+    "[2025-10-06T15:55:53.407Z] \n💾 Saving verification results to benchmarks/reports/independent-verification-1759766096188.json"
+  ]
+}

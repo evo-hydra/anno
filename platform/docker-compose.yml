@@ -1,0 +1,429 @@
+# Enterprise Anno Platform - Docker Compose
+# Future-Proof, Modular, Dynamic, and Consistent multi-tenant deployment
+
+version: '3.8'
+
+services:
+  # API Gateway - Single entry point with authentication and rate limiting
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./api-gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - auth-service
+      - anno-core-1
+      - anno-core-2
+      - anno-core-3
+    environment:
+      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/conf.d
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Authentication & Authorization Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://anno_auth:${AUTH_DB_PASSWORD}@postgres:5432/anno_auth
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - BILLING_WEBHOOK_SECRET=${BILLING_WEBHOOK_SECRET}
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/auth-service:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Core Anno Services (Load Balanced)
+  anno-core-1:
+    build:
+      context: ../  # Build from Anno root
+      dockerfile: platform/anno-core/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5213
+      - RENDERING_ENABLED=true
+      - RENDER_STEALTH=true
+      - RENDER_HEADLESS=true
+      - REDIS_URL=redis://redis:6379/1
+      - DATABASE_URL=postgresql://anno_core:${CORE_DB_PASSWORD}@postgres:5432/anno_core
+      - INSTANCE_ID=anno-core-1
+      - AUTH_SERVICE_URL=http://auth-service:3000
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/anno-core-1:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5213/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  anno-core-2:
+    build:
+      context: ../  # Build from Anno root
+      dockerfile: platform/anno-core/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5213
+      - RENDERING_ENABLED=true
+      - RENDER_STEALTH=true
+      - RENDER_HEADLESS=true
+      - REDIS_URL=redis://redis:6379/2
+      - DATABASE_URL=postgresql://anno_core:${CORE_DB_PASSWORD}@postgres:5432/anno_core
+      - INSTANCE_ID=anno-core-2
+      - AUTH_SERVICE_URL=http://auth-service:3000
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/anno-core-2:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5213/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  anno-core-3:
+    build:
+      context: ../  # Build from Anno root
+      dockerfile: platform/anno-core/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5213
+      - RENDERING_ENABLED=true
+      - RENDER_STEALTH=true
+      - RENDER_HEADLESS=true
+      - REDIS_URL=redis://redis:6379/3
+      - DATABASE_URL=postgresql://anno_core:${CORE_DB_PASSWORD}@postgres:5432/anno_core
+      - INSTANCE_ID=anno-core-3
+      - AUTH_SERVICE_URL=http://auth-service:3000
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/anno-core-3:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5213/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Enterprise Services (for high-tier tenants)
+  anno-enterprise-1:
+    build:
+      context: ../  # Build from Anno root
+      dockerfile: platform/anno-core/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5213
+      - RENDERING_ENABLED=true
+      - RENDER_STEALTH=true
+      - RENDER_HEADLESS=true
+      - REDIS_URL=redis://redis:6379/4
+      - DATABASE_URL=postgresql://anno_core:${CORE_DB_PASSWORD}@postgres:5432/anno_core
+      - INSTANCE_ID=anno-enterprise-1
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - ENTERPRISE_TIER=true
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/anno-enterprise-1:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5213/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  anno-enterprise-2:
+    build:
+      context: ../  # Build from Anno root
+      dockerfile: platform/anno-core/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - PORT=5213
+      - RENDERING_ENABLED=true
+      - RENDER_STEALTH=true
+      - RENDER_HEADLESS=true
+      - REDIS_URL=redis://redis:6379/5
+      - DATABASE_URL=postgresql://anno_core:${CORE_DB_PASSWORD}@postgres:5432/anno_core
+      - INSTANCE_ID=anno-enterprise-2
+      - AUTH_SERVICE_URL=http://auth-service:3000
+      - ENTERPRISE_TIER=true
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/anno-enterprise-2:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5213/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Configuration Service
+  config-service:
+    build:
+      context: ./config-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://anno_config:${CONFIG_DB_PASSWORD}@postgres:5432/anno_config
+      - REDIS_URL=redis://redis:6379/6
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/config-service:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Service
+  monitoring-service:
+    build:
+      context: ./monitoring-service
+      dockerfile: Dockerfile
+    ports:
+      - "9090:9090"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://anno_monitoring:${MONITORING_DB_PASSWORD}@postgres:5432/anno_monitoring
+      - REDIS_URL=redis://redis:6379/7
+      - PROMETHEUS_URL=http://prometheus:9090
+      - GRAFANA_URL=http://grafana:3000
+    depends_on:
+      - postgres
+      - redis
+      - prometheus
+      - grafana
+    volumes:
+      - ./logs/monitoring-service:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Prometheus - Metrics collection
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+  # Grafana - Metrics visualization
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+  # PostgreSQL - Primary database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=anno_platform
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Redis - Caching and session storage
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Elasticsearch - Log aggregation and search
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - anno-platform
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Kibana - Log visualization
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+  # Jaeger - Distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+  # Backup Service
+  backup-service:
+    build:
+      context: ./backup-service
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_URL=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432
+      - S3_BUCKET=${BACKUP_S3_BUCKET}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+    depends_on:
+      - postgres
+    volumes:
+      - ./backups:/app/backups
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+  # Security Scanner
+  security-scanner:
+    build:
+      context: ./security-scanner
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://anno_security:${SECURITY_DB_PASSWORD}@postgres:5432/anno_security
+      - REDIS_URL=redis://redis:6379/8
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./logs/security-scanner:/app/logs
+    networks:
+      - anno-platform
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  elasticsearch_data:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  anno-platform:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

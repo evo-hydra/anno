@@ -1,0 +1,29 @@
+{
+  "runs": 10,
+  "results": {
+    "embeddings_openai": {
+      "runs": 10,
+      "minMs": 202,
+      "avgMs": 850,
+      "maxMs": 1774,
+      "p50Ms": 818,
+      "p95Ms": 1774
+    },
+    "summarization_openai": {
+      "runs": 10,
+      "minMs": 454,
+      "avgMs": 856,
+      "maxMs": 1499,
+      "p50Ms": 921,
+      "p95Ms": 1499
+    },
+    "summarization_ollama": {
+      "runs": 10,
+      "minMs": 678,
+      "avgMs": 1097,
+      "maxMs": 1576,
+      "p50Ms": 1215,
+      "p95Ms": 1576
+    }
+  }
+}

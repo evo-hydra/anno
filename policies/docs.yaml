@@ -1,0 +1,35 @@
+# Documentation Policy - Optimized for technical documentation
+name: docs
+version: 1.0.0
+preset: docs
+domain: '*.readthedocs.io|*.github.io|docs.*|developer.*'
+
+# Keep main content, code examples, navigation
+keep:
+  - selector: 'main'
+  - selector: 'article'
+  - selector: '[role="main"]'
+  - selector: '.content'
+  - selector: '.documentation'
+  - selector: 'pre'
+  - selector: 'code'
+  - selector: '.toc'
+
+# Drop ads, feedback widgets, footers
+drop:
+  - selector: script
+  - selector: style
+  - selector: '.ad'
+  - selector: '.feedback-widget'
+  - selector: '.footer-links'
+  - selector: '.edit-on-github'
+  - selector: '.cookie-notice'
+  - regex: 'Was this helpful'
+
+# Field requirements
+fields:
+  title:
+    required: true
+  main:
+    required: true
+    minLength: 100

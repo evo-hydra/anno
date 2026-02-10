@@ -1,0 +1,78 @@
+# Domain Configuration
+# Per-domain settings for rendering, rate limiting, and extraction
+version: "1.0"
+
+# Default configuration applied to all domains
+defaults:
+  enabled: true
+  rendering:
+    requiresJavaScript: false
+    waitTime: 1000
+  rateLimit:
+    requestsPerSecond: 2
+    requestsPerMinute: 60
+    minDelay: 500
+  extraction:
+    minConfidence: 0.7
+
+# Per-domain configurations
+domains:
+  # eBay configuration - requires JavaScript for modern pages
+  - pattern: "*.ebay.com"
+    rendering:
+      requiresJavaScript: true
+      waitForSelectors:
+        - "[data-testid='x-price-primary']"
+        - ".x-item-title"
+      waitTime: 2000
+      blockResources:
+        - image
+        - font
+    rateLimit:
+      requestsPerSecond: 1
+      requestsPerMinute: 30
+      minDelay: 1000
+    extraction:
+      preferredAdapter: "ebay-adapter"
+      minConfidence: 0.8
+
+  # Amazon configuration
+  - pattern: "*.amazon.com"
+    rendering:
+      requiresJavaScript: true
+      waitForSelectors:
+        - "#productTitle"
+        - "#priceblock_ourprice"
+      waitTime: 2000
+    rateLimit:
+      requestsPerSecond: 0.5
+      requestsPerMinute: 20
+      minDelay: 2000
+    extraction:
+      preferredAdapter: "amazon-adapter"
+
+  # Walmart configuration
+  - pattern: "*.walmart.com"
+    rendering:
+      requiresJavaScript: true
+      waitForSelectors:
+        - "[data-testid='product-title']"
+      waitTime: 3000
+    rateLimit:
+      requestsPerSecond: 1
+      requestsPerMinute: 40
+      minDelay: 1000
+
+  # Static sites that don't need JS rendering
+  - pattern: "*.wikipedia.org"
+    rendering:
+      requiresJavaScript: false
+      waitTime: 500
+    rateLimit:
+      requestsPerSecond: 5
+      requestsPerMinute: 200
+      minDelay: 200
+
+  # Example of disabled domain
+  - pattern: "blocked.example.com"
+    enabled: false

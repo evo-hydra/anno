@@ -1,0 +1,87 @@
+{
+  "name": "@evointel/anno",
+  "version": "1.0.0",
+  "description": "Anno - AI-native web content extractor with semantic understanding",
+  "private": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "anno": "dist/cli/index.js"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "start": "node dist/server.js",
+    "test": "npm run lint && npm run test:unit",
+    "test:unit": "npm run build && node --require dotenv/config --test dist/__tests__",
+    "benchmark": "tsx benchmarks/comprehensive-demo.ts",
+    "benchmark:simple": "tsx benchmarks/simple-comparison.ts",
+    "benchmark:working": "tsx benchmarks/working-demo.ts",
+    "validate": "tsx benchmarks/run-full-validation.ts",
+    "validate:comprehensive": "tsx benchmarks/comprehensive-validation.ts",
+    "validate:quality": "tsx benchmarks/llm-quality-evaluator.ts",
+    "validate:independent": "tsx benchmarks/independent-verification.ts",
+    "validate:token": "tsx benchmarks/token-efficiency.ts",
+    "validate:accuracy": "tsx benchmarks/extraction-accuracy.ts",
+    "validate:traditional": "tsx benchmarks/anno-vs-traditional.ts",
+    "bench:llm-latency": "tsx benchmarks/llm-latency.ts"
+  },
+  "keywords": [
+    "anno",
+    "web-scraping",
+    "content-extraction",
+    "ai",
+    "semantic",
+    "playwright",
+    "web-extraction",
+    "agents"
+  ],
+  "author": "EvoIntel",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/evointel/anno"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "@langchain/anthropic": "^0.3.30",
+    "@langchain/community": "^0.3.57",
+    "@langchain/core": "^0.3.78",
+    "@langchain/openai": "^0.6.14",
+    "@mozilla/readability": "^0.6.0",
+    "@types/js-yaml": "^4.0.9",
+    "cohere-ai": "^7.19.0",
+    "commander": "^13.0.0",
+    "cors": "^2.8.5",
+    "csv-parse": "^6.1.0",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "js-yaml": "^4.1.0",
+    "jsdom": "^22.1.0",
+    "langchain": "^0.3.35",
+    "lru-cache": "^10.4.3",
+    "openai": "^6.1.0",
+    "playwright-core": "^1.55.1",
+    "playwright-extra": "^4.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2",
+    "redis": "^5.8.3",
+    "robots-parser": "^3.0.1",
+    "tiktoken": "^1.0.22",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/jsdom": "^21.1.7",
+    "@types/node": "^24.5.2",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
+    "eslint": "^9.36.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.9.2"
+  }
+}

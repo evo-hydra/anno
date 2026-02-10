@@ -1,0 +1,62 @@
+{
+  "timestamp": "2025-10-06T15:19:35.176Z",
+  "config": {
+    "annoServerUrl": "http://localhost:8080",
+    "testUrls": [
+      "https://example.com",
+      "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "https://httpbin.org/html",
+      "https://www.bbc.com/news/technology",
+      "https://nodejs.org/en/docs"
+    ],
+    "outputFile": "benchmarks/reports/independent-verification-1759763962908.json",
+    "useCachedResults": false
+  },
+  "results": [],
+  "summary": {
+    "totalTests": 0,
+    "avgTokenReduction": null,
+    "stdDevTokenReduction": null,
+    "avgSizeReduction": null,
+    "independentlyVerified": true
+  },
+  "auditTrail": [
+    "[2025-10-06T15:19:22.908Z] 🔍 INDEPENDENT VERIFICATION STARTED",
+    "[2025-10-06T15:19:22.910Z] Configuration: {\n  \"annoServerUrl\": \"http://localhost:8080\",\n  \"testUrls\": [\n    \"https://example.com\",\n    \"https://en.wikipedia.org/wiki/Artificial_intelligence\",\n    \"https://httpbin.org/html\",\n    \"https://www.bbc.com/news/technology\",\n    \"https://nodejs.org/en/docs\"\n  ],\n  \"outputFile\": \"benchmarks/reports/independent-verification-1759763962908.json\",\n  \"useCachedResults\": false\n}",
+    "[2025-10-06T15:19:22.910Z] Total URLs to verify: 5\n",
+    "[2025-10-06T15:19:22.910Z] \n[1/5] Processing https://example.com",
+    "[2025-10-06T15:19:22.910Z] \n=== VERIFYING: https://example.com ===",
+    "[2025-10-06T15:19:22.910Z] [TRADITIONAL] Fetching https://example.com",
+    "[2025-10-06T15:19:23.212Z] [TRADITIONAL] Success: 1256 bytes, 314 tokens, 302ms",
+    "[2025-10-06T15:19:23.713Z] [NEUROSURF] Fetching https://example.com",
+    "[2025-10-06T15:19:27.358Z] [NEUROSURF] Error: terminated",
+    "[2025-10-06T15:19:27.358Z] [ERROR] Verification failed: terminated",
+    "[2025-10-06T15:19:28.360Z] \n[2/5] Processing https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:19:28.360Z] \n=== VERIFYING: https://en.wikipedia.org/wiki/Artificial_intelligence ===",
+    "[2025-10-06T15:19:28.360Z] [TRADITIONAL] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:19:28.720Z] [TRADITIONAL] Success: 1268141 bytes, 317036 tokens, 360ms",
+    "[2025-10-06T15:19:29.220Z] [NEUROSURF] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:19:29.222Z] [NEUROSURF] Error: fetch failed",
+    "[2025-10-06T15:19:29.222Z] [ERROR] Verification failed: fetch failed",
+    "[2025-10-06T15:19:30.224Z] \n[3/5] Processing https://httpbin.org/html",
+    "[2025-10-06T15:19:30.224Z] \n=== VERIFYING: https://httpbin.org/html ===",
+    "[2025-10-06T15:19:30.224Z] [TRADITIONAL] Fetching https://httpbin.org/html",
+    "[2025-10-06T15:19:30.433Z] [TRADITIONAL] Error: HTTP 503",
+    "[2025-10-06T15:19:30.433Z] [ERROR] Verification failed: HTTP 503",
+    "[2025-10-06T15:19:31.434Z] \n[4/5] Processing https://www.bbc.com/news/technology",
+    "[2025-10-06T15:19:31.434Z] \n=== VERIFYING: https://www.bbc.com/news/technology ===",
+    "[2025-10-06T15:19:31.434Z] [TRADITIONAL] Fetching https://www.bbc.com/news/technology",
+    "[2025-10-06T15:19:31.742Z] [TRADITIONAL] Success: 483508 bytes, 120877 tokens, 308ms",
+    "[2025-10-06T15:19:32.243Z] [NEUROSURF] Fetching https://www.bbc.com/news/technology",
+    "[2025-10-06T15:19:32.244Z] [NEUROSURF] Error: fetch failed",
+    "[2025-10-06T15:19:32.244Z] [ERROR] Verification failed: fetch failed",
+    "[2025-10-06T15:19:33.245Z] \n[5/5] Processing https://nodejs.org/en/docs",
+    "[2025-10-06T15:19:33.246Z] \n=== VERIFYING: https://nodejs.org/en/docs ===",
+    "[2025-10-06T15:19:33.246Z] [TRADITIONAL] Fetching https://nodejs.org/en/docs",
+    "[2025-10-06T15:19:33.672Z] [TRADITIONAL] Success: 14135 bytes, 3534 tokens, 426ms",
+    "[2025-10-06T15:19:34.172Z] [NEUROSURF] Fetching https://nodejs.org/en/docs",
+    "[2025-10-06T15:19:34.175Z] [NEUROSURF] Error: fetch failed",
+    "[2025-10-06T15:19:34.175Z] [ERROR] Verification failed: fetch failed",
+    "[2025-10-06T15:19:35.176Z] \n💾 Saving verification results to benchmarks/reports/independent-verification-1759763962908.json"
+  ]
+}

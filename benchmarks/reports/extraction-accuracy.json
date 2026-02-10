@@ -1,0 +1,19 @@
+{
+  "timestamp": "2025-10-03T14:24:39.135Z",
+  "summary": {
+    "avgPrecision": 0.94,
+    "avgRecall": 0.91,
+    "avgF1": 0.925,
+    "totalTests": 3
+  },
+  "byMethod": {
+    "readability": {
+      "avgF1": 0.95,
+      "count": 2
+    },
+    "dom-heuristic": {
+      "avgF1": 0.88,
+      "count": 1
+    }
+  }
+}

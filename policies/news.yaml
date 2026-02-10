@@ -1,0 +1,44 @@
+# News Policy - Optimized for news articles
+name: news
+version: 1.0.0
+preset: news
+domain: '*.news.*|*.nytimes.com|*.washingtonpost.com|*.bbc.com|*.cnn.com|*.reuters.com'
+
+# Keep article content and metadata
+keep:
+  - selector: article
+  - selector: '[role="article"]'
+  - selector: '.story-content'
+  - selector: '.article-content'
+  - selector: '.story-meta'
+  - selector: '.byline'
+
+# Drop ads, social, comments
+drop:
+  - selector: script
+  - selector: style
+  - selector: '.ad'
+  - selector: '.advertisement'
+  - selector: '.social-share'
+  - selector: '.comments'
+  - selector: '.related-articles'
+  - selector: '.newsletter-signup'
+  - selector: '.trending'
+  - selector: 'aside'
+  - regex: 'Advertisement'
+  - regex: 'Sponsored Content'
+
+# Field requirements
+fields:
+  title:
+    required: true
+    minLength: 10
+    maxLength: 200
+  author:
+    required: true
+  main:
+    required: true
+    minLength: 200
+  excerpt:
+    minLength: 50
+    maxLength: 300

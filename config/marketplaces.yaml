@@ -1,0 +1,169 @@
+# Marketplace Adapter Configuration
+#
+# Per-marketplace compliance, rate limiting, and feature flags.
+# See: docs/specs/MARKETPLACE_ADAPTER_RFC.md
+
+marketplaces:
+  ebay:
+    enabled: true
+    rendering:
+      requiresJavaScript: false
+      waitForSelectors: []
+      waitTime: 0
+      blockResources: []
+    rateLimit:
+      requestsPerSecond: 2
+      requestsPerMinute: 100
+      requestsPerHour: 5000
+      burstSize: 5
+      backoffStrategy: exponential
+      retryAttempts: 3
+    session:
+      requireProxy: false
+      proxyRotation: none
+      cookiePersistence: true
+      userAgentRotation: false
+      sessionDuration: 0
+    compliance:
+      respectRobotsTxt: true
+      crawlDelay: 500
+      userAgent: "AnnoBot/1.0 (+https://anno.example.com/bot)"
+      maxConcurrentRequests: 3
+    quality:
+      minConfidenceScore: 0.7
+      requiredFields:
+        - title
+        - price
+        - url
+    features:
+      extractDescriptions: false
+      extractReviews: false
+      extractVariants: false
+      enableBackfill: true
+
+  amazon:
+    enabled: false  # Dark launch - not yet enabled in production
+    rendering:
+      requiresJavaScript: true
+      waitForSelectors:
+        - "#productTitle"
+        - "#priceblock_ourprice"
+        - ".a-price .a-offscreen"
+      waitTime: 2000
+      blockResources:
+        - image
+        - font
+        - stylesheet
+    rateLimit:
+      requestsPerSecond: 1
+      requestsPerMinute: 30
+      requestsPerHour: 1000
+      burstSize: 2
+      backoffStrategy: exponential
+      retryAttempts: 5
+    session:
+      requireProxy: true
+      proxyRotation: per_request
+      cookiePersistence: true
+      userAgentRotation: true
+      sessionDuration: 30
+    compliance:
+      respectRobotsTxt: true
+      crawlDelay: 2000
+      userAgent: "Mozilla/5.0 (compatible; AnnoBot/1.0)"
+      maxConcurrentRequests: 1
+    quality:
+      minConfidenceScore: 0.75
+      requiredFields:
+        - title
+        - availability
+        - itemNumber
+    features:
+      extractDescriptions: false
+      extractReviews: false
+      extractVariants: false
+      enableBackfill: false
+
+  walmart:
+    enabled: false  # Not yet launched
+    rendering:
+      requiresJavaScript: true
+      waitForSelectors:
+        - "h1[itemprop='name']"
+        - "[data-testid='price-wrap']"
+      waitTime: 1500
+      blockResources:
+        - image
+        - font
+    rateLimit:
+      requestsPerSecond: 1.5
+      requestsPerMinute: 60
+      requestsPerHour: 2000
+      burstSize: 3
+      backoffStrategy: exponential
+      retryAttempts: 4
+    session:
+      requireProxy: false
+      proxyRotation: per_session
+      cookiePersistence: true
+      userAgentRotation: false
+      sessionDuration: 60
+    compliance:
+      respectRobotsTxt: true
+      crawlDelay: 1000
+      userAgent: "Mozilla/5.0 (compatible; AnnoBot/1.0)"
+      maxConcurrentRequests: 2
+    quality:
+      minConfidenceScore: 0.7
+      requiredFields:
+        - title
+        - price
+        - itemNumber
+    features:
+      extractDescriptions: false
+      extractReviews: false
+      extractVariants: false
+      enableBackfill: false
+
+  etsy:
+    enabled: false  # Future marketplace
+    rendering:
+      requiresJavaScript: false
+      waitForSelectors: []
+      waitTime: 0
+      blockResources: []
+    rateLimit:
+      requestsPerSecond: 1
+      requestsPerMinute: 40
+      requestsPerHour: 1500
+      burstSize: 2
+      backoffStrategy: exponential
+      retryAttempts: 3
+    session:
+      requireProxy: false
+      proxyRotation: none
+      cookiePersistence: true
+      userAgentRotation: false
+      sessionDuration: 0
+    compliance:
+      respectRobotsTxt: true
+      crawlDelay: 1000
+      userAgent: "AnnoBot/1.0 (+https://anno.example.com/bot)"
+      maxConcurrentRequests: 2
+    quality:
+      minConfidenceScore: 0.7
+      requiredFields:
+        - title
+        - price
+    features:
+      extractDescriptions: false
+      extractReviews: false
+      extractVariants: false
+      enableBackfill: false
+
+# Global feature flags
+featureFlags:
+  extraction_events_enabled: true
+  extraction_events_persist_to_disk: false
+  nightly_validation_enabled: false
+  backfill_jobs_enabled: false

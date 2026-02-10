@@ -1,0 +1,31 @@
+{
+  "name": "@anno/sdk",
+  "version": "0.2.0",
+  "description": "Official TypeScript SDK for Anno API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "anno",
+    "web-scraping",
+    "ai",
+    "llm",
+    "content-extraction"
+  ],
+  "author": "evo-hydra",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "@types/node": "^24.5.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

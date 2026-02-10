@@ -1,0 +1,26 @@
+# Sample eBay Sold Listing URLs for Testing
+# Replace these with your actual sold listing URLs
+
+# Dell Laptops - Business Grade
+https://www.ebay.com/itm/256473841777
+https://www.ebay.com/itm/256473841778
+https://www.ebay.com/itm/256473841779
+
+# ThinkPad Series
+https://www.ebay.com/itm/256473841780
+https://www.ebay.com/itm/256473841781
+https://www.ebay.com/itm/256473841782
+
+# HP EliteBook
+https://www.ebay.com/itm/256473841783
+https://www.ebay.com/itm/256473841784
+https://www.ebay.com/itm/256473841785
+
+# How to find sold listings:
+# 1. Go to ebay.com
+# 2. Search for your item (e.g., "Dell Latitude 5420")
+# 3. On the left sidebar, check "Sold Items" under "Show only"
+# 4. Copy the URLs of sold listings
+# 5. Add them to this file (one per line)
+#
+# Note: URLs should be to individual item pages (/itm/...), not search results

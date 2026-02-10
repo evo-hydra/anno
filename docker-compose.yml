@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  anno:
+    build: .
+    container_name: anno_dev
+    env_file:
+      - .env.local
+    ports:
+      - "5213:5213"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev

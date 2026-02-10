@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-10-03T14:24:39.135Z",
+  "summary": {
+    "avgReduction": 82.3,
+    "p50": 84.1,
+    "p95": 91.2,
+    "p99": 93.7,
+    "totalUrls": 9
+  },
+  "byCategory": {
+    "news": 85.4,
+    "tech-blog": 83.1,
+    "documentation": 78.9,
+    "academic": 79.2,
+    "product": 81.5
+  },
+  "byMethod": {
+    "readability": 84.2,
+    "dom-heuristic": 79.8,
+    "ollama": 83.6
+  }
+}

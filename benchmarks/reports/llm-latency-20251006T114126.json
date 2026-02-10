@@ -1,0 +1,13 @@
+{
+  "runs": 20,
+  "results": {
+    "summarization_ollama": {
+      "runs": 20,
+      "minMs": 285,
+      "avgMs": 1093,
+      "maxMs": 1870,
+      "p50Ms": 1032,
+      "p95Ms": 1870
+    }
+  }
+}

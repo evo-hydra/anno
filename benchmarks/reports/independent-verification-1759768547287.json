@@ -1,0 +1,141 @@
+{
+  "timestamp": "2025-10-06T16:36:17.620Z",
+  "config": {
+    "annoServerUrl": "http://localhost:18080",
+    "testUrls": [
+      "https://example.com",
+      "https://httpbin.org/html",
+      "https://en.wikipedia.org/wiki/Artificial_intelligence"
+    ],
+    "outputFile": "benchmarks/reports/independent-verification-1759768547287.json"
+  },
+  "results": [
+    {
+      "url": "https://example.com",
+      "traditional": {
+        "sizeBytes": 1256,
+        "tokens": 314,
+        "fetchTimeMs": 176.77195900003426,
+        "content": "<!doctype html>\n<html>\n<head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\" />\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n        \n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>    \n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domai"
+      },
+      "anno": {
+        "sizeBytes": 177,
+        "tokens": 45,
+        "fetchTimeMs": 1954.2483769999817,
+        "content": "This domain is for use in illustrative examples in documents. You may use this\n    domain in literature without prior coordination or asking for permission.\nMore information...\n",
+        "confidence": 0.54
+      },
+      "comparison": {
+        "tokenReductionPercent": 85.6687898089172,
+        "sizeReductionPercent": 85.90764331210191,
+        "speedChangePercent": -1005.5194432730154
+      },
+      "verification": {
+        "timestamp": "2025-10-06T16:35:49.919Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-2fbfb59b",
+          "anno": "747e5ae2"
+        }
+      }
+    },
+    {
+      "url": "https://httpbin.org/html",
+      "traditional": {
+        "sizeBytes": 3739,
+        "tokens": 935,
+        "fetchTimeMs": 1562.091172000044,
+        "content": "<!DOCTYPE html>\n<html>\n  <head>\n  </head>\n  <body>\n      <h1>Herman Melville - Moby-Dick</h1>\n\n      <div>\n        <p>\n          Availing himself of the mild, summer-cool weather that now reigned in these latitudes, and in preparation for the peculiarly active pursuits shortly to be anticipated, Perth, the begrimed, blistered old blacksmith, had not removed his portable forge to the hold again, after concluding his contributory work for Ahab's leg, but still retained it on deck, fast lashed to ringbolts by the foremast; being now almost incessantly invoked by the headsmen, and harpooneers, and bowsmen to do some little job for them; altering, or repairing, or new shaping their various weapons and boat furniture. Often he would be surrounded by an eager circle, all waiting to be served; holding boat-spades, pike-heads, harpoons, and lances, and jealously watching his every sooty movement, as he toiled. Nevertheless, this old man's was a patient hammer wielded by a patient arm. No murmur"
+      },
+      "anno": {
+        "sizeBytes": 3595,
+        "tokens": 899,
+        "fetchTimeMs": 14244.08015100006,
+        "content": "Herman Melville - Moby-Dick\nAvailing himself of the mild, summer-cool weather that now reigned in these latitudes, and in preparation for the peculiarly active pursuits shortly to be anticipated, Perth, the begrimed, blistered old blacksmith, had not removed his portable forge to the hold again, after concluding his contributory work for Ahab's leg, but still retained it on deck, fast lashed to ringbolts by the foremast; being now almost incessantly invoked by the headsmen, and harpooneers, and bowsmen to do some little job for them; altering, or repairing, or new shaping their various weapons and boat furniture. Often he would be surrounded by an eager circle, all waiting to be served; holding boat-spades, pike-heads, harpoons, and lances, and jealously watching his every sooty movement, as he toiled. Nevertheless, this old man's was a patient hammer wielded by a patient arm. No murmur, no impatience, no petulance did come from him. Silent, slow, and solemn; bowing over still further ",
+        "confidence": 0.72
+      },
+      "comparison": {
+        "tokenReductionPercent": 3.8502673796791447,
+        "sizeReductionPercent": 3.8512971382722654,
+        "speedChangePercent": -811.859717686162
+      },
+      "verification": {
+        "timestamp": "2025-10-06T16:36:07.227Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-1c0ce22",
+          "anno": "49cb285e"
+        }
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "traditional": {
+        "sizeBytes": 1268141,
+        "tokens": 317036,
+        "fetchTimeMs": 357.5451860000612,
+        "content": "<!DOCTYPE html>\n<html class=\"client-nojs vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-1 vector-feature-appearance-pinned-clientpref-1 vector-feature-night-mode-enabled skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available\" lang=\"en\" dir=\"ltr\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Artificial intelligence - Wikipedia</title>\n<script>(function(){var className=\"client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled ve"
+      },
+      "anno": {
+        "sizeBytes": 352,
+        "tokens": 88,
+        "fetchTimeMs": 7530.549637999968,
+        "content": "Artificial intelligence (AI) is the development of computer systems able to perform tasks that typically require human intelligence, such as visual perception, speech recognition, decision-making, and language translation. The field of study aims to create machines that can think like humans, learn from data, and improve their performance over time.\n",
+        "confidence": 0.54
+      },
+      "comparison": {
+        "tokenReductionPercent": 99.97224289985995,
+        "sizeReductionPercent": 99.97224283419588,
+        "speedChangePercent": -2006.1812416623277
+      },
+      "verification": {
+        "timestamp": "2025-10-06T16:36:16.619Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-4a0ab1",
+          "anno": "4db13776"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "totalTests": 3,
+    "avgTokenReduction": 63.163766696152095,
+    "stdDevTokenReduction": 42.3455278508851,
+    "avgSizeReduction": 63.24372776152336,
+    "independentlyVerified": true
+  },
+  "auditTrail": [
+    "[2025-10-06T16:35:47.287Z] 🔍 INDEPENDENT VERIFICATION STARTED",
+    "[2025-10-06T16:35:47.287Z] Configuration: {\n  \"annoServerUrl\": \"http://localhost:18080\",\n  \"testUrls\": [\n    \"https://example.com\",\n    \"https://httpbin.org/html\",\n    \"https://en.wikipedia.org/wiki/Artificial_intelligence\"\n  ],\n  \"outputFile\": \"benchmarks/reports/independent-verification-1759768547287.json\"\n}",
+    "[2025-10-06T16:35:47.287Z] Total URLs to verify: 3\n",
+    "[2025-10-06T16:35:47.287Z] \n[1/3] Processing https://example.com",
+    "[2025-10-06T16:35:47.287Z] \n=== VERIFYING: https://example.com ===",
+    "[2025-10-06T16:35:47.287Z] [TRADITIONAL] Fetching https://example.com",
+    "[2025-10-06T16:35:47.464Z] [TRADITIONAL] Success: 1256 bytes, 314 tokens, 177ms",
+    "[2025-10-06T16:35:47.964Z] [NEUROSURF] Fetching https://example.com",
+    "[2025-10-06T16:35:49.918Z] [NEUROSURF] Success: 177 bytes, 45 tokens, 1954ms, confidence: 0.54%",
+    "[2025-10-06T16:35:49.919Z] [COMPARISON] Token reduction: 85.7%",
+    "[2025-10-06T16:35:49.919Z] [COMPARISON] Size reduction: 85.9%",
+    "[2025-10-06T16:35:49.919Z] [VERIFICATION] Checksums: traditional=-2fbfb59b, anno=747e5ae2",
+    "[2025-10-06T16:35:50.920Z] \n[2/3] Processing https://httpbin.org/html",
+    "[2025-10-06T16:35:50.920Z] \n=== VERIFYING: https://httpbin.org/html ===",
+    "[2025-10-06T16:35:50.920Z] [TRADITIONAL] Fetching https://httpbin.org/html",
+    "[2025-10-06T16:35:52.482Z] [TRADITIONAL] Success: 3739 bytes, 935 tokens, 1562ms",
+    "[2025-10-06T16:35:52.982Z] [NEUROSURF] Fetching https://httpbin.org/html",
+    "[2025-10-06T16:36:07.226Z] [NEUROSURF] Success: 3595 bytes, 899 tokens, 14244ms, confidence: 0.72%",
+    "[2025-10-06T16:36:07.227Z] [COMPARISON] Token reduction: 3.9%",
+    "[2025-10-06T16:36:07.227Z] [COMPARISON] Size reduction: 3.9%",
+    "[2025-10-06T16:36:07.227Z] [VERIFICATION] Checksums: traditional=-1c0ce22, anno=49cb285e",
+    "[2025-10-06T16:36:08.228Z] \n[3/3] Processing https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T16:36:08.228Z] \n=== VERIFYING: https://en.wikipedia.org/wiki/Artificial_intelligence ===",
+    "[2025-10-06T16:36:08.228Z] [TRADITIONAL] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T16:36:08.586Z] [TRADITIONAL] Success: 1268141 bytes, 317036 tokens, 358ms",
+    "[2025-10-06T16:36:09.087Z] [NEUROSURF] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T16:36:16.617Z] [NEUROSURF] Success: 352 bytes, 88 tokens, 7531ms, confidence: 0.54%",
+    "[2025-10-06T16:36:16.619Z] [COMPARISON] Token reduction: 100.0%",
+    "[2025-10-06T16:36:16.619Z] [COMPARISON] Size reduction: 100.0%",
+    "[2025-10-06T16:36:16.619Z] [VERIFICATION] Checksums: traditional=-4a0ab1, anno=4db13776",
+    "[2025-10-06T16:36:17.620Z] \n💾 Saving verification results to benchmarks/reports/independent-verification-1759768547287.json"
+  ]
+}

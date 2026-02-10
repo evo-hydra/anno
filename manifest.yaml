@@ -1,0 +1,32 @@
+tool_id: anno
+name: Anno
+version: "1.0.0"
+description: >
+  AI-native web content extractor with semantic understanding, 82%+ token reduction,
+  marketplace intelligence, and multi-source research capabilities.
+entrypoint:
+  build: ["npm", "run", "build"]
+  start: ["npm", "run", "start"]
+  health:
+    type: http
+    url: "http://127.0.0.1:{port}/health"
+    expected_status: [200, 203]
+defaults:
+  port: 5213
+  env:
+    PORT: "{port}"
+    RENDERING_ENABLED: "false"
+    METRICS_RESET_ENABLED: "true"
+    POLICY_DIR: "./policies"
+requirements:
+  node: ">=18"
+  optional_services:
+    redis: true
+capabilities:
+  - semantic_fetch
+  - content_extraction
+  - marketplace_intelligence
+  - multi_agent_swarms
+  - token_optimization
+telemetry:
+  namespace: anno

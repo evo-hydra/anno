@@ -1,0 +1,141 @@
+{
+  "timestamp": "2025-10-06T15:07:00.561Z",
+  "config": {
+    "annoServerUrl": "http://localhost:8080",
+    "testUrls": [
+      "https://example.com",
+      "https://httpbin.org/html",
+      "https://en.wikipedia.org/wiki/Artificial_intelligence"
+    ],
+    "outputFile": "benchmarks/reports/independent-verification-1759763179627.json"
+  },
+  "results": [
+    {
+      "url": "https://example.com",
+      "traditional": {
+        "sizeBytes": 1256,
+        "tokens": 314,
+        "fetchTimeMs": 210.65829900000244,
+        "content": "<!doctype html>\n<html>\n<head>\n    <title>Example Domain</title>\n\n    <meta charset=\"utf-8\" />\n    <meta http-equiv=\"Content-type\" content=\"text/html; charset=utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <style type=\"text/css\">\n    body {\n        background-color: #f0f0f2;\n        margin: 0;\n        padding: 0;\n        font-family: -apple-system, system-ui, BlinkMacSystemFont, \"Segoe UI\", \"Open Sans\", \"Helvetica Neue\", Helvetica, Arial, sans-serif;\n        \n    }\n    div {\n        width: 600px;\n        margin: 5em auto;\n        padding: 2em;\n        background-color: #fdfdff;\n        border-radius: 0.5em;\n        box-shadow: 2px 3px 7px 2px rgba(0,0,0,0.02);\n    }\n    a:link, a:visited {\n        color: #38488f;\n        text-decoration: none;\n    }\n    @media (max-width: 700px) {\n        div {\n            margin: 0 auto;\n            width: auto;\n        }\n    }\n    </style>    \n</head>\n\n<body>\n<div>\n    <h1>Example Domain</h1>\n    <p>This domai"
+      },
+      "anno": {
+        "sizeBytes": 0,
+        "tokens": 0,
+        "fetchTimeMs": 765.9705959999701,
+        "content": "",
+        "confidence": 0
+      },
+      "comparison": {
+        "tokenReductionPercent": 100,
+        "sizeReductionPercent": 100,
+        "speedChangePercent": -263.6080798316715
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:06:21.105Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-2fbfb59b",
+          "anno": "0"
+        }
+      }
+    },
+    {
+      "url": "https://httpbin.org/html",
+      "traditional": {
+        "sizeBytes": 3739,
+        "tokens": 935,
+        "fetchTimeMs": 12755.024451000034,
+        "content": "<!DOCTYPE html>\n<html>\n  <head>\n  </head>\n  <body>\n      <h1>Herman Melville - Moby-Dick</h1>\n\n      <div>\n        <p>\n          Availing himself of the mild, summer-cool weather that now reigned in these latitudes, and in preparation for the peculiarly active pursuits shortly to be anticipated, Perth, the begrimed, blistered old blacksmith, had not removed his portable forge to the hold again, after concluding his contributory work for Ahab's leg, but still retained it on deck, fast lashed to ringbolts by the foremast; being now almost incessantly invoked by the headsmen, and harpooneers, and bowsmen to do some little job for them; altering, or repairing, or new shaping their various weapons and boat furniture. Often he would be surrounded by an eager circle, all waiting to be served; holding boat-spades, pike-heads, harpoons, and lances, and jealously watching his every sooty movement, as he toiled. Nevertheless, this old man's was a patient hammer wielded by a patient arm. No murmur"
+      },
+      "anno": {
+        "sizeBytes": 0,
+        "tokens": 0,
+        "fetchTimeMs": 15005.557161999983,
+        "content": "",
+        "confidence": 0
+      },
+      "comparison": {
+        "tokenReductionPercent": 100,
+        "sizeReductionPercent": 100,
+        "speedChangePercent": -17.64428378515182
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:06:50.369Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-1c0ce22",
+          "anno": "0"
+        }
+      }
+    },
+    {
+      "url": "https://en.wikipedia.org/wiki/Artificial_intelligence",
+      "traditional": {
+        "sizeBytes": 1268152,
+        "tokens": 317038,
+        "fetchTimeMs": 335.576851000078,
+        "content": "<!DOCTYPE html>\n<html class=\"client-nojs vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled vector-feature-custom-font-size-clientpref-1 vector-feature-appearance-pinned-clientpref-1 vector-feature-night-mode-enabled skin-theme-clientpref-day vector-sticky-header-enabled vector-toc-available\" lang=\"en\" dir=\"ltr\">\n<head>\n<meta charset=\"UTF-8\">\n<title>Artificial intelligence - Wikipedia</title>\n<script>(function(){var className=\"client-js vector-feature-language-in-header-enabled vector-feature-language-in-main-page-header-disabled vector-feature-page-tools-pinned-disabled vector-feature-toc-pinned-clientpref-1 vector-feature-main-menu-pinned-disabled vector-feature-limited-width-clientpref-1 vector-feature-limited-width-content-enabled ve"
+      },
+      "anno": {
+        "sizeBytes": 0,
+        "tokens": 0,
+        "fetchTimeMs": 7352.704235999961,
+        "content": "",
+        "confidence": 0
+      },
+      "comparison": {
+        "tokenReductionPercent": 100,
+        "sizeReductionPercent": 100,
+        "speedChangePercent": -2091.0641970945285
+      },
+      "verification": {
+        "timestamp": "2025-10-06T15:06:59.561Z",
+        "verifiedBy": "IndependentVerifier v1.0",
+        "checksums": {
+          "traditional": "-280a4f3b",
+          "anno": "0"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "totalTests": 3,
+    "avgTokenReduction": 100,
+    "stdDevTokenReduction": 0,
+    "avgSizeReduction": 100,
+    "independentlyVerified": true
+  },
+  "auditTrail": [
+    "[2025-10-06T15:06:19.627Z] 🔍 INDEPENDENT VERIFICATION STARTED",
+    "[2025-10-06T15:06:19.627Z] Configuration: {\n  \"annoServerUrl\": \"http://localhost:8080\",\n  \"testUrls\": [\n    \"https://example.com\",\n    \"https://httpbin.org/html\",\n    \"https://en.wikipedia.org/wiki/Artificial_intelligence\"\n  ],\n  \"outputFile\": \"benchmarks/reports/independent-verification-1759763179627.json\"\n}",
+    "[2025-10-06T15:06:19.627Z] Total URLs to verify: 3\n",
+    "[2025-10-06T15:06:19.627Z] \n[1/3] Processing https://example.com",
+    "[2025-10-06T15:06:19.627Z] \n=== VERIFYING: https://example.com ===",
+    "[2025-10-06T15:06:19.627Z] [TRADITIONAL] Fetching https://example.com",
+    "[2025-10-06T15:06:19.838Z] [TRADITIONAL] Success: 1256 bytes, 314 tokens, 211ms",
+    "[2025-10-06T15:06:20.339Z] [NEUROSURF] Fetching https://example.com",
+    "[2025-10-06T15:06:21.105Z] [NEUROSURF] Success: 0 bytes, 0 tokens, 766ms, confidence: 0%",
+    "[2025-10-06T15:06:21.105Z] [COMPARISON] Token reduction: 100.0%",
+    "[2025-10-06T15:06:21.105Z] [COMPARISON] Size reduction: 100.0%",
+    "[2025-10-06T15:06:21.105Z] [VERIFICATION] Checksums: traditional=-2fbfb59b, anno=0",
+    "[2025-10-06T15:06:22.106Z] \n[2/3] Processing https://httpbin.org/html",
+    "[2025-10-06T15:06:22.106Z] \n=== VERIFYING: https://httpbin.org/html ===",
+    "[2025-10-06T15:06:22.106Z] [TRADITIONAL] Fetching https://httpbin.org/html",
+    "[2025-10-06T15:06:34.861Z] [TRADITIONAL] Success: 3739 bytes, 935 tokens, 12755ms",
+    "[2025-10-06T15:06:35.362Z] [NEUROSURF] Fetching https://httpbin.org/html",
+    "[2025-10-06T15:06:50.368Z] [NEUROSURF] Success: 0 bytes, 0 tokens, 15006ms, confidence: 0%",
+    "[2025-10-06T15:06:50.368Z] [COMPARISON] Token reduction: 100.0%",
+    "[2025-10-06T15:06:50.368Z] [COMPARISON] Size reduction: 100.0%",
+    "[2025-10-06T15:06:50.369Z] [VERIFICATION] Checksums: traditional=-1c0ce22, anno=0",
+    "[2025-10-06T15:06:51.369Z] \n[3/3] Processing https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:06:51.370Z] \n=== VERIFYING: https://en.wikipedia.org/wiki/Artificial_intelligence ===",
+    "[2025-10-06T15:06:51.370Z] [TRADITIONAL] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:06:51.705Z] [TRADITIONAL] Success: 1268152 bytes, 317038 tokens, 336ms",
+    "[2025-10-06T15:06:52.205Z] [NEUROSURF] Fetching https://en.wikipedia.org/wiki/Artificial_intelligence",
+    "[2025-10-06T15:06:59.558Z] [NEUROSURF] Success: 0 bytes, 0 tokens, 7353ms, confidence: 0%",
+    "[2025-10-06T15:06:59.560Z] [COMPARISON] Token reduction: 100.0%",
+    "[2025-10-06T15:06:59.561Z] [COMPARISON] Size reduction: 100.0%",
+    "[2025-10-06T15:06:59.561Z] [VERIFICATION] Checksums: traditional=-280a4f3b, anno=0",
+    "[2025-10-06T15:07:00.561Z] \n💾 Saving verification results to benchmarks/reports/independent-verification-1759763179627.json"
+  ]
+}

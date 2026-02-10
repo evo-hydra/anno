@@ -1,0 +1,41 @@
+# Academic Policy - Optimized for research papers and academic content
+name: academic
+version: 1.0.0
+preset: academic
+domain: '*.arxiv.org|*.scholar.google.com|*.jstor.org|*.researchgate.net|*.ieee.org|*.acm.org'
+
+# Keep abstract, main content, references, figures
+keep:
+  - selector: 'article'
+  - selector: 'main'
+  - selector: '.abstract'
+  - selector: '.paper-content'
+  - selector: '.references'
+  - selector: '.citation'
+  - selector: 'figure'
+  - selector: '.author-list'
+  - selector: '.metadata'
+
+# Drop navigation, related papers, ads
+drop:
+  - selector: script
+  - selector: style
+  - selector: '.sidebar'
+  - selector: '.related-papers'
+  - selector: '.recommendations'
+  - selector: '.ad'
+  - selector: 'nav'
+  - selector: 'footer'
+  - regex: 'Advertisement'
+  - regex: 'Related Articles'
+
+# Field requirements
+fields:
+  title:
+    required: true
+    minLength: 10
+  author:
+    required: false
+  main:
+    required: true
+    minLength: 200

@@ -1,0 +1,27 @@
+# Default Policy - Generic web content extraction
+name: default
+version: 1.0.0
+preset: default
+
+# Drop common noise elements
+drop:
+  - selector: script
+  - selector: style
+  - selector: noscript
+  - selector: iframe
+  - selector: '.ad'
+  - selector: '.advertisement'
+  - selector: '.sidebar'
+  - selector: '.cookie-banner'
+  - selector: '[role="banner"]'
+  - selector: '[role="complementary"]'
+  - regex: 'Advertisement'
+  - regex: 'Subscribe to our newsletter'
+
+# Field requirements
+fields:
+  title:
+    required: true
+  main:
+    required: true
+    minLength: 50

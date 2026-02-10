@@ -1,0 +1,391 @@
+openapi: 3.1.0
+info:
+  title: Anno API
+  version: 0.2.0
+  description: |
+    Anno - AI-Native Web Browser API
+
+    Anno transforms web content into semantic, machine-readable streams optimized for AI agents.
+    Achieves 82.3% token reduction while preserving 92.5% quality (F1 score).
+
+    ## Features
+    - **NDJSON Streaming**: Efficient real-time content delivery
+    - **Provenance Tracking**: Full citation chains with SHA-256 hashing
+    - **Policy Engine**: Domain-specific extraction rules
+    - **Confidence Scoring**: Probabilistic quality assessment
+    - **Batch Processing**: Parallel content fetching
+
+  contact:
+    name: Anno Support
+    email: support@anno.example.com
+  license:
+    name: Proprietary
+    url: https://anno.example.com/license
+
+servers:
+  - url: http://localhost:5213
+    description: Local development
+  - url: https://staging.anno.example.com
+    description: Staging environment
+  - url: https://api.anno.example.com
+    description: Production environment
+
+security:
+  - ApiKeyAuth: []
+
+tags:
+  - name: Content
+    description: Web content fetching and distillation
+  - name: Semantic
+    description: Semantic search and RAG operations
+  - name: Memory
+    description: Session memory management
+  - name: Health
+    description: System health and metrics
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Get system health status with detailed metrics
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: System is healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      description: Get Prometheus-format metrics for monitoring
+      tags: [Health]
+      security: []
+      responses:
+        '200':
+          description: Metrics in Prometheus text format
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /v1/content/fetch:
+    post:
+      summary: Fetch and distill web content
+      description: |
+        Fetch a URL and return distilled content as NDJSON stream.
+        Each line is a JSON event with metadata, nodes, confidence, or provenance.
+      tags: [Content]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FetchRequest'
+            examples:
+              basic:
+                summary: Basic fetch
+                value:
+                  url: "https://example.com/article"
+              withOptions:
+                summary: Fetch with options
+                value:
+                  url: "https://example.com/article"
+                  options:
+                    useCache: true
+                    maxNodes: 60
+                    render: true
+      responses:
+        '200':
+          description: NDJSON stream of content events
+          headers:
+            X-RateLimit-Limit:
+              schema:
+                type: integer
+              description: Request rate limit
+            X-RateLimit-Remaining:
+              schema:
+                type: integer
+              description: Remaining requests
+            X-RateLimit-Reset:
+              schema:
+                type: string
+                format: date-time
+              description: Rate limit reset time
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: Newline-delimited JSON events
+              examples:
+                stream:
+                  summary: Example NDJSON stream
+                  value: |
+                    {"type":"metadata","payload":{"url":"https://example.com","status":200}}
+                    {"type":"confidence","payload":{"overallConfidence":0.85}}
+                    {"type":"node","payload":{"tag":"h1","text":"Article Title"}}
+                    {"type":"node","payload":{"tag":"p","text":"Content paragraph..."}}
+                    {"type":"provenance","payload":{"contentHash":"abc123..."}}
+                    {"type":"done","payload":{"nodes":25}}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RateLimitError'
+
+  /v1/content/batch-fetch:
+    post:
+      summary: Batch fetch multiple URLs
+      description: |
+        Fetch multiple URLs in parallel and return combined NDJSON stream.
+        Events are wrapped with source metadata for tracking.
+      tags: [Content]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchFetchRequest'
+      responses:
+        '200':
+          description: NDJSON stream of batch events
+          content:
+            application/x-ndjson:
+              schema:
+                type: string
+                description: Newline-delimited JSON batch events
+
+  /v1/semantic/search:
+    post:
+      summary: Semantic search
+      description: Search cached content using semantic similarity
+      tags: [Semantic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemanticSearchRequest'
+      responses:
+        '200':
+          description: Search results with similarity scores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SemanticSearchResponse'
+
+  /v1/memory/sessions:
+    post:
+      summary: Create memory session
+      description: Create a new session for storing conversation context
+      tags: [Memory]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSessionRequest'
+      responses:
+        '201':
+          description: Session created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+
+  schemas:
+    FetchRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL to fetch and distill
+          example: "https://example.com/article"
+        options:
+          type: object
+          properties:
+            useCache:
+              type: boolean
+              default: true
+              description: Whether to use cached content
+            maxNodes:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 60
+              description: Maximum nodes to extract
+            render:
+              type: boolean
+              default: false
+              description: Use Playwright rendering for JavaScript-heavy sites
+
+    BatchFetchRequest:
+      type: object
+      required:
+        - urls
+      properties:
+        urls:
+          type: array
+          items:
+            type: string
+            format: uri
+          minItems: 1
+          maxItems: 10
+          description: URLs to fetch
+        options:
+          type: object
+          properties:
+            useCache:
+              type: boolean
+              default: true
+            maxNodes:
+              type: integer
+              minimum: 1
+              maximum: 100
+              default: 60
+            render:
+              type: boolean
+              default: false
+            parallel:
+              type: integer
+              minimum: 1
+              maximum: 5
+              default: 3
+              description: Number of parallel requests
+
+    SemanticSearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          description: Search query
+        k:
+          type: integer
+          minimum: 1
+          maximum: 20
+          default: 5
+          description: Number of results to return
+        sessionId:
+          type: string
+          format: uuid
+          description: Optional session ID for context
+
+    CreateSessionRequest:
+      type: object
+      properties:
+        metadata:
+          type: object
+          additionalProperties: true
+          description: Optional session metadata
+
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, degraded, unhealthy]
+        version:
+          type: string
+        uptime:
+          type: number
+        metrics:
+          type: object
+          properties:
+            fetch:
+              type: object
+              properties:
+                totalRequests:
+                  type: integer
+                cacheHits:
+                  type: integer
+                cacheMisses:
+                  type: integer
+        renderer:
+          type: object
+          properties:
+            initialized:
+              type: boolean
+            poolDepth:
+              type: integer
+
+    SessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    SemanticSearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              content:
+                type: string
+              score:
+                type: number
+              metadata:
+                type: object
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+    RateLimitError:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Rate limit exceeded"
+        message:
+          type: string
+        retryAfter:
+          type: integer
+          description: Seconds until retry is allowed

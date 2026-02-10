@@ -1,0 +1,73 @@
+{
+  "manifest_version": 3,
+  "name": "Anno Data Capture",
+  "version": "1.0.0",
+  "description": "Capture marketplace order data from your authenticated sessions for Anno",
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://www.amazon.com/*",
+    "https://www.amazon.co.uk/*",
+    "https://www.amazon.de/*",
+    "https://www.amazon.fr/*",
+    "https://www.amazon.it/*",
+    "https://www.amazon.es/*",
+    "https://www.amazon.ca/*",
+    "https://www.amazon.co.jp/*",
+    "https://www.ebay.com/*",
+    "https://www.ebay.co.uk/*",
+    "https://www.ebay.de/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.amazon.com/gp/your-account/order-history*",
+        "https://www.amazon.com/gp/css/order-history*",
+        "https://www.amazon.com/your-orders/*",
+        "https://www.amazon.co.uk/gp/your-account/order-history*",
+        "https://www.amazon.co.uk/gp/css/order-history*",
+        "https://www.amazon.co.uk/your-orders/*",
+        "https://www.amazon.de/gp/your-account/order-history*",
+        "https://www.amazon.de/gp/css/order-history*",
+        "https://www.amazon.de/your-orders/*",
+        "https://www.amazon.fr/gp/your-account/order-history*",
+        "https://www.amazon.ca/gp/your-account/order-history*"
+      ],
+      "js": ["content-scripts/amazon.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.ebay.com/myb/PurchaseHistory*",
+        "https://www.ebay.com/mye/myebay/purchase*",
+        "https://www.ebay.co.uk/myb/PurchaseHistory*",
+        "https://www.ebay.de/myb/PurchaseHistory*"
+      ],
+      "js": ["content-scripts/ebay.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

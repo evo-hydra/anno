@@ -1,0 +1,39 @@
+# E-commerce Policy - Optimized for product pages
+name: ecommerce
+version: 1.0.0
+preset: ecommerce
+domain: '*.amazon.*|*.ebay.*|*.etsy.*|shop.*|store.*'
+
+# Keep product details, price, specs
+keep:
+  - selector: '.product-details'
+  - selector: '.product-info'
+  - selector: '.price'
+  - selector: '.specifications'
+  - selector: '.description'
+  - selector: '[itemprop="name"]'
+  - selector: '[itemprop="price"]'
+  - selector: '[itemprop="description"]'
+
+# Drop recommendations, reviews (can be noisy), ads
+drop:
+  - selector: script
+  - selector: style
+  - selector: '.recommendations'
+  - selector: '.you-may-also-like'
+  - selector: '.recently-viewed'
+  - selector: '.ad'
+  - selector: '.sponsored'
+  - selector: '.footer'
+  - selector: '.breadcrumb'
+  - regex: 'Customers who bought this'
+  - regex: 'Advertisement'
+
+# Field requirements
+fields:
+  title:
+    required: true
+    minLength: 5
+  main:
+    required: true
+    minLength: 50
