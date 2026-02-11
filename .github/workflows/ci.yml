@@ -40,10 +40,7 @@ jobs:
 
       - run: npm ci --legacy-peer-deps
 
-      # NOTE: marketplace-cli.ts has pre-existing type errors.
-      # Once those are fixed, remove continue-on-error.
       - run: npx tsc --noEmit
-        continue-on-error: true
 
   test:
     name: Test

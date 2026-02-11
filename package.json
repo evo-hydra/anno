@@ -47,7 +47,6 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
-    "@langchain/anthropic": "^0.3.30",
     "@langchain/community": "^0.3.57",
     "@langchain/core": "^0.3.78",
     "@langchain/openai": "^0.6.14",
@@ -62,7 +61,6 @@
     "helmet": "^8.1.0",
     "js-yaml": "^4.1.0",
     "jsdom": "^22.1.0",
-    "langchain": "^0.3.35",
     "lru-cache": "^10.4.3",
     "openai": "^6.1.0",
     "playwright-core": "^1.55.1",
@@ -81,7 +79,6 @@
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
     "eslint": "^9.36.0",
-    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2"
   }
