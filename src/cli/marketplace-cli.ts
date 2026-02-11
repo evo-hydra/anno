@@ -10,10 +10,11 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import { telemetryManager } from '../services/extractors/extraction-telemetry';
+import { telemetryManager, type TelemetryEventType } from '../services/extractors/extraction-telemetry';
+import type { MarketplaceType } from '../services/extractors/marketplace-adapter';
 import { MarketplaceDemoRunner } from '../services/extractors/demo-script';
 import { marketplaceRegistry } from '../services/extractors/marketplace-registry';
-import { featureFlags, MARKETPLACE_FLAGS } from '../services/extractors/feature-flags';
+import { featureFlags } from '../services/extractors/feature-flags';
 
 const program = new Command();
 
@@ -122,7 +123,7 @@ program
     const limit = parseInt(options.limit, 10);
 
     // Apply filters
-    const filter: any = {};
+    const filter: { eventType?: TelemetryEventType; marketplace?: MarketplaceType } = {};
     if (options.type) filter.eventType = options.type;
     if (options.marketplace) filter.marketplace = options.marketplace;
 
@@ -138,14 +139,20 @@ program
     console.log(chalk.bold(`Showing ${events.length} events:\n`));
 
     events.forEach((event, i) => {
-      const typeColor = {
+      const typeColor: Record<string, chalk.Chalk> = {
         extraction_started: chalk.blue,
         extraction_completed: chalk.green,
         extraction_failed: chalk.red,
+        validation_completed: chalk.cyan,
         rate_limit_hit: chalk.yellow,
-      }[event.eventType] || chalk.gray;
+        retry_attempted: chalk.magenta,
+        fallback_selector_used: chalk.yellow,
+        cache_hit: chalk.green,
+        cache_miss: chalk.gray,
+      };
+      const color = typeColor[event.eventType] || chalk.gray;
 
-      console.log(`${i + 1}. ${typeColor(event.eventType)}`);
+      console.log(`${i + 1}. ${color(event.eventType)}`);
       console.log(`   ${chalk.gray(event.timestamp)}`);
       console.log(`   ${event.marketplace}: ${event.url}`);
 

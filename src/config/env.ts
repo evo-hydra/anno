@@ -43,8 +43,20 @@ export interface AppConfig {
     defaultPolicy: string;
     validationEnabled: boolean;
   };
+  ssrf: {
+    enabled: boolean;
+    allowedHosts: string[];
+    blockedHosts: string[];
+    allowPrivateIPs: boolean;
+  };
   domains: {
     configPath: string;
+  };
+  auth: {
+    enabled: boolean;
+    apiKeys: string[];
+    rateLimitPerKey: number;
+    bypassInDev: boolean;
   };
 }
 
@@ -137,7 +149,19 @@ export const config: AppConfig = {
     defaultPolicy: process.env.DEFAULT_POLICY ?? 'default.yaml',
     validationEnabled: booleanFromEnv(process.env.POLICY_VALIDATION_ENABLED, true)
   },
+  ssrf: {
+    enabled: booleanFromEnv(process.env.SSRF_PROTECTION_ENABLED, true),
+    allowedHosts: (process.env.SSRF_ALLOWED_HOSTS ?? '').split(',').map(s => s.trim()).filter(Boolean),
+    blockedHosts: (process.env.SSRF_BLOCKED_HOSTS ?? '').split(',').map(s => s.trim()).filter(Boolean),
+    allowPrivateIPs: booleanFromEnv(process.env.SSRF_ALLOW_PRIVATE_IPS, false),
+  },
   domains: {
     configPath: process.env.DOMAIN_CONFIG_PATH ?? './config/domains.yaml'
+  },
+  auth: {
+    enabled: booleanFromEnv(process.env.ANNO_AUTH_ENABLED, false),
+    apiKeys: (process.env.ANNO_API_KEYS ?? '').split(',').map(s => s.trim()).filter(Boolean),
+    rateLimitPerKey: numberFromEnv(process.env.ANNO_RATE_LIMIT_PER_KEY, 60),
+    bypassInDev: booleanFromEnv(process.env.ANNO_AUTH_BYPASS_DEV, true),
   }
 };

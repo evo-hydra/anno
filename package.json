@@ -16,6 +16,7 @@
     "start": "node dist/server.js",
     "test": "npm run lint && npm run test:unit",
     "test:unit": "npm run build && node --require dotenv/config --test dist/__tests__",
+    "test:ci": "npm run build && node --require dotenv/config --test dist/__tests__",
     "benchmark": "tsx benchmarks/comprehensive-demo.ts",
     "benchmark:simple": "tsx benchmarks/simple-comparison.ts",
     "benchmark:working": "tsx benchmarks/working-demo.ts",

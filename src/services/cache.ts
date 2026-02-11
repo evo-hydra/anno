@@ -11,6 +11,7 @@ import { config } from '../config/env';
 import { RedisCacheAdapter } from './cache-redis';
 import { logger } from '../utils/logger';
 import { metrics } from './metrics';
+import { CircuitBreaker, CircuitOpenError } from '../utils/circuit-breaker';
 
 export interface CacheEntry<T> {
   value: T;
@@ -63,9 +64,16 @@ class UnifiedCache {
   private redisAdapter: RedisCacheAdapter | null = null;
   private lruCache: MemoryCache;
   private strategy: CacheStrategy = 'lru';
+  private redisCircuitBreaker: CircuitBreaker;
 
   constructor() {
     this.lruCache = new MemoryCache();
+    this.redisCircuitBreaker = new CircuitBreaker({
+      name: 'redis-cache',
+      failureThreshold: 5,
+      resetTimeoutMs: 30000,
+      halfOpenMaxAttempts: 1,
+    });
 
     if (config.redis.enabled) {
       try {
@@ -89,16 +97,26 @@ class UnifiedCache {
     const startTime = Date.now();
 
     try {
-      // Try Redis first if available
+      // Try Redis first if available, guarded by circuit breaker
       if (this.strategy === 'redis' && this.redisAdapter?.isReady()) {
-        const result = await this.redisAdapter.get<T>(key);
-        const duration = Date.now() - startTime;
+        try {
+          const result = await this.redisCircuitBreaker.execute(async () => {
+            return this.redisAdapter!.get<T>(key);
+          });
+          const duration = Date.now() - startTime;
 
-        if (result !== undefined) {
-          metrics.recordCacheHit();
-          metrics.recordCacheLookup(duration);
-          logger.debug(`Cache HIT (Redis): ${key} in ${duration}ms`);
-          return result;
+          if (result !== undefined) {
+            metrics.recordCacheHit();
+            metrics.recordCacheLookup(duration);
+            logger.debug(`Cache HIT (Redis): ${key} in ${duration}ms`);
+            return result;
+          }
+        } catch (error: unknown) {
+          if (error instanceof CircuitOpenError) {
+            logger.debug(`Cache: Redis circuit open, falling back to LRU for key ${key}`);
+          } else {
+            throw error;
+          }
         }
       }
 
@@ -129,8 +147,18 @@ class UnifiedCache {
     try {
       // Write to both Redis and LRU for redundancy
       if (this.strategy === 'redis' && this.redisAdapter?.isReady()) {
-        await this.redisAdapter.set(key, value);
-        logger.debug(`Cache SET (Redis): ${key}`);
+        try {
+          await this.redisCircuitBreaker.execute(async () => {
+            await this.redisAdapter!.set(key, value);
+          });
+          logger.debug(`Cache SET (Redis): ${key}`);
+        } catch (error: unknown) {
+          if (error instanceof CircuitOpenError) {
+            logger.debug(`Cache: Redis circuit open, skipping Redis SET for key ${key}`);
+          } else {
+            logger.error(`Cache: Redis SET failed for key ${key}`, error as Record<string, unknown>);
+          }
+        }
       }
 
       // Always write to LRU as fallback layer
@@ -145,7 +173,17 @@ class UnifiedCache {
   async has(key: string): Promise<boolean> {
     try {
       if (this.strategy === 'redis' && this.redisAdapter?.isReady()) {
-        return await this.redisAdapter.has(key);
+        try {
+          return await this.redisCircuitBreaker.execute(async () => {
+            return this.redisAdapter!.has(key);
+          });
+        } catch (error: unknown) {
+          if (error instanceof CircuitOpenError) {
+            logger.debug(`Cache: Redis circuit open, falling back to LRU for has check on key ${key}`);
+          } else {
+            throw error;
+          }
+        }
       }
       return await this.lruCache.has(key);
     } catch (error: unknown) {
@@ -157,7 +195,17 @@ class UnifiedCache {
   async delete(key: string): Promise<void> {
     try {
       if (this.strategy === 'redis' && this.redisAdapter?.isReady()) {
-        await this.redisAdapter.delete(key);
+        try {
+          await this.redisCircuitBreaker.execute(async () => {
+            await this.redisAdapter!.delete(key);
+          });
+        } catch (error: unknown) {
+          if (error instanceof CircuitOpenError) {
+            logger.debug(`Cache: Redis circuit open, skipping Redis DELETE for key ${key}`);
+          } else {
+            logger.error(`Cache: Redis DELETE failed for key ${key}`, error as Record<string, unknown>);
+          }
+        }
       }
       await this.lruCache.delete(key);
       logger.debug(`Cache DELETE: ${key}`);

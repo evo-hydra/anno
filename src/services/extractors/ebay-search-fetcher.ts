@@ -290,7 +290,7 @@ export class EbaySearchFetcher {
           });
           logger.debug('Found search results with selector', { selector });
           return true;
-        } catch (e) {
+        } catch (_e) {
           // Try next selector
           continue;
         }

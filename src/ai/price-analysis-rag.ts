@@ -533,8 +533,13 @@ export class PriceAnalysisRAG {
   private generateRecommendations(analysis: {
     statistics: PriceStatistics;
     byCondition: Record<string, PriceStatistics>;
-    deals: any[];
-    trends: any;
+    deals: Array<{ item: PriceDataPoint; savingsPercent: number; reason: string }>;
+    trends: {
+      direction: 'up' | 'down' | 'stable';
+      recentAvg: number;
+      olderAvg: number;
+      changePercent: number;
+    } | null;
   }): string[] {
     const recommendations: string[] = [];
 

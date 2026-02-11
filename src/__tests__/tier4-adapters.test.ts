@@ -5,7 +5,7 @@
  * These are fallback adapters for when structured extraction fails.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   LLMExtractionAdapter,
   createClaudeAdapter,

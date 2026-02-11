@@ -15,10 +15,8 @@ import {
   DataSourceChannel,
   DataSourceTier,
   DataSourceHealth,
-  MarketplaceListing,
   MarketplaceListingWithProvenance,
   MarketplaceConfig,
-  ExtractionOptions,
   ValidationResult,
   CHANNEL_CONFIDENCE_DEFAULTS,
 } from '../services/extractors/marketplace-adapter';
@@ -43,7 +41,7 @@ function createMockAdapter(
   const {
     marketplace = 'ebay',
     channel = 'scraping',
-    tier = CHANNEL_CONFIDENCE_DEFAULTS[channel] ? 3 : 3,
+    _tier = CHANNEL_CONFIDENCE_DEFAULTS[channel] ? 3 : 3,
     name = `Mock ${channel} Adapter`,
     version = '1.0.0',
     available = true,
@@ -239,7 +237,7 @@ describe('DataSourceOrchestrator', () => {
     });
 
     it('falls back to next adapter on failure', async () => {
-      const tier1Listing = createMockListing({
+      const _tier1Listing = createMockListing({
         title: 'Tier 1 Item',
         provenance: { channel: 'official_api', tier: 1, confidence: 0.95, freshness: 'realtime', sourceId: 'api', extractedAt: new Date().toISOString(), userConsented: true, termsCompliant: true },
       });

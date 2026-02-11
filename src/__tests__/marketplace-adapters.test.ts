@@ -4,7 +4,7 @@
  * Comprehensive test suite for marketplace adapters, registry, and event pipeline.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { EbayAdapterV2 } from '../services/extractors/ebay-adapter-v2';
 import { EbayAdapter } from '../services/extractors/ebay-adapter';
 import { AmazonAdapter } from '../services/extractors/amazon-adapter';
@@ -15,18 +15,13 @@ import {
   createExtractionEvent,
   ExtractionAnalytics,
 } from '../services/extractors/extraction-event-pipeline';
-import { BackfillExecutor, createBackfillJob } from '../services/extractors/backfill-executor';
+import { createBackfillJob } from '../services/extractors/backfill-executor';
 import {
   CHANNEL_TIER_MAP,
   CHANNEL_CONFIDENCE_DEFAULTS,
 } from '../services/extractors/marketplace-adapter';
 import type {
-  MarketplaceConfig,
   ExtractionEvent,
-  DataSourceAdapter,
-  DataSourceChannel,
-  DataSourceTier,
-  DataProvenance,
 } from '../services/extractors/marketplace-adapter';
 
 // ============================================================================

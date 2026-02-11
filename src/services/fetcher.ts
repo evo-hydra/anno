@@ -6,6 +6,7 @@ import { recordCacheValidation, recordFetchMetrics } from './metrics';
 import { robotsManager } from '../core/robots-parser';
 import { rateLimiter } from '../core/rate-limiter';
 import { httpClient } from '../core/http-client';
+import { validateUrl } from '../core/url-validator';
 
 export type FetchMode = 'http' | 'rendered';
 
@@ -203,6 +204,10 @@ const fetchRendered = async (url: string): Promise<{
 };
 
 export const fetchPage = async ({ url, useCache, mode }: FetchRequestOptions): Promise<FetchResult> => {
+  // SSRF protection: validate URL before any fetch (covers the rendered path
+  // which bypasses httpClient and uses page.goto() directly)
+  await validateUrl(url);
+
   if (mode === 'rendered' && !config.rendering.enabled) {
     logger.error('Rendering requested but renderer disabled', { url });
     recordFetchMetrics({

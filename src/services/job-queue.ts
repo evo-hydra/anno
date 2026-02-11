@@ -1,7 +1,7 @@
 /**
  * Async Job Queue with Webhook Support
  *
- * Provides a priority-based in-memory job queue for long-running tasks such as
+ * Provides a priority-based job queue for long-running tasks such as
  * crawls, bulk extractions, research, and workflows. Jobs are submitted via
  * `enqueue()` which returns a job ID immediately. A background worker loop
  * processes queued jobs up to a configurable concurrency limit.
@@ -13,6 +13,7 @@
  * - Retry on failure
  * - Webhook notifications on completion/failure (fire-and-forget with one retry)
  * - SSE-compatible progress streaming via async generator
+ * - Persistent job storage via Redis (with in-memory fallback)
  * - LRU eviction for completed jobs (keeps last 100)
  *
  * @module services/job-queue
@@ -20,6 +21,8 @@
 
 import { randomUUID } from 'crypto';
 import { logger } from '../utils/logger';
+import { validateWebhookUrl } from '../core/url-validator';
+import { JobStore, InMemoryJobStore, createJobStore } from './job-store';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -93,6 +96,25 @@ function toPublicJob(job: Job): Job {
   };
 }
 
+/** Convert a Job to a plain record suitable for the store. */
+function jobToRecord(job: Job) {
+  return {
+    id: job.id,
+    type: job.type,
+    status: job.status,
+    payload: job.payload,
+    options: job.options as Record<string, unknown>,
+    progress: job.progress,
+    statusMessage: job.statusMessage,
+    result: job.result,
+    error: job.error,
+    createdAt: job.createdAt,
+    startedAt: job.startedAt,
+    completedAt: job.completedAt,
+    attempts: job.attempts,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // JobQueue implementation
 // ---------------------------------------------------------------------------
@@ -104,8 +126,11 @@ const MAX_COMPLETED_JOBS = 100;
 const WORKER_INTERVAL_MS = 250;
 
 export class JobQueue {
-  /** All jobs indexed by ID (active + recent completed). */
+  /** In-memory cache of active jobs indexed by ID (hot path for running jobs). */
   private jobs = new Map<string, Job>();
+
+  /** Persistent store for all jobs. */
+  private store: JobStore;
 
   /** Ordered queue of job IDs waiting to run (sorted by priority desc, then creation asc). */
   private queue: string[] = [];
@@ -134,13 +159,28 @@ export class JobQueue {
   /** Whether the queue is accepting and processing jobs. */
   private active = false;
 
-  constructor(options?: { concurrency?: number }) {
+  constructor(options?: { concurrency?: number; store?: JobStore }) {
     this.concurrency = options?.concurrency ?? DEFAULT_CONCURRENCY;
+    // Use provided store or default to in-memory (caller can upgrade via init())
+    this.store = options?.store ?? new InMemoryJobStore();
   }
 
   // -----------------------------------------------------------------------
   // Public API
   // -----------------------------------------------------------------------
+
+  /**
+   * Initialize the job store. If no store was provided in the constructor,
+   * this will attempt to connect to Redis and fall back to in-memory if
+   * Redis is unavailable.
+   */
+  async init(): Promise<void> {
+    // Only auto-create if using the default InMemoryJobStore from constructor
+    if (this.store instanceof InMemoryJobStore) {
+      this.store = await createJobStore();
+    }
+    logger.info('JobQueue store initialized');
+  }
 
   /**
    * Add a job to the queue. Returns the job ID immediately.
@@ -167,6 +207,7 @@ export class JobQueue {
     };
 
     this.jobs.set(id, job);
+    this.persistJob(job);
     this.insertIntoQueue(id, job.options.priority ?? DEFAULT_PRIORITY, now);
 
     logger.info('Job enqueued', { jobId: id, type, priority: job.options.priority });
@@ -208,6 +249,8 @@ export class JobQueue {
     this.running.delete(jobId);
     this.abortControllers.delete(jobId);
 
+    this.persistJob(job);
+
     this.emitEvent(jobId, {
       event: 'status',
       data: { jobId, status: 'cancelled' },
@@ -220,25 +263,89 @@ export class JobQueue {
 
   /**
    * Get a job by ID (returns a public snapshot).
+   *
+   * Checks in-memory cache first (for hot/active jobs), then falls back to
+   * the persistent store for completed/historical jobs.
    */
-  getJob(jobId: string): Job | undefined {
+  async getJob(jobId: string): Promise<Job | undefined> {
+    // Check in-memory cache first (fast path for active jobs)
+    const memJob = this.jobs.get(jobId);
+    if (memJob) return toPublicJob(memJob);
+
+    // Fall back to persistent store
+    const record = await this.store.get(jobId);
+    if (!record) return undefined;
+
+    return {
+      id: record.id,
+      type: record.type as JobType,
+      status: record.status as JobStatus,
+      payload: record.payload,
+      options: record.options as JobOptions,
+      progress: record.progress,
+      statusMessage: record.statusMessage,
+      result: record.result,
+      error: record.error,
+      createdAt: record.createdAt,
+      startedAt: record.startedAt,
+      completedAt: record.completedAt,
+      attempts: record.attempts,
+    };
+  }
+
+  /**
+   * Synchronous get from in-memory cache only. Used internally and for
+   * backward compatibility where async is not possible.
+   */
+  getJobSync(jobId: string): Job | undefined {
     const job = this.jobs.get(jobId);
     return job ? toPublicJob(job) : undefined;
   }
 
   /**
    * List jobs with optional status/type filter.
+   *
+   * Queries the persistent store for a complete view (including jobs that
+   * survived a restart). Falls back to in-memory if the store is empty.
    */
-  listJobs(filter?: { status?: JobStatus; type?: JobType }): Job[] {
-    const results: Job[] = [];
-    for (const job of this.jobs.values()) {
+  async listJobs(filter?: { status?: JobStatus; type?: JobType }): Promise<Job[]> {
+    const records = await this.store.list({
+      status: filter?.status,
+      type: filter?.type,
+    });
+
+    // Merge with in-memory state for active jobs (running jobs have fresher state in memory)
+    const result = new Map<string, Job>();
+
+    for (const record of records) {
+      result.set(record.id, {
+        id: record.id,
+        type: record.type as JobType,
+        status: record.status as JobStatus,
+        payload: record.payload,
+        options: record.options as JobOptions,
+        progress: record.progress,
+        statusMessage: record.statusMessage,
+        result: record.result,
+        error: record.error,
+        createdAt: record.createdAt,
+        startedAt: record.startedAt,
+        completedAt: record.completedAt,
+        attempts: record.attempts,
+      });
+    }
+
+    // Overlay in-memory active jobs (they have the latest progress/status)
+    for (const [id, job] of this.jobs) {
       if (filter?.status && job.status !== filter.status) continue;
       if (filter?.type && job.type !== filter.type) continue;
-      results.push(toPublicJob(job));
+      result.set(id, toPublicJob(job));
     }
+
+    const jobs = Array.from(result.values());
     // Sort by createdAt descending (newest first)
-    results.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-    return results;
+    jobs.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    return jobs;
   }
 
   /**
@@ -395,6 +502,15 @@ export class JobQueue {
   // -----------------------------------------------------------------------
 
   /**
+   * Persist a job to the store (fire-and-forget with error logging).
+   */
+  private persistJob(job: Job): void {
+    this.store.set(jobToRecord(job)).catch((err: Error) => {
+      logger.error('Failed to persist job to store', { jobId: job.id, error: err.message });
+    });
+  }
+
+  /**
    * Insert a job ID into the priority queue, maintaining sort order.
    * Higher priority first; within same priority, earlier creation time first (FIFO).
    */
@@ -456,6 +572,7 @@ export class JobQueue {
       job.status = 'failed';
       job.error = `No handler registered for job type '${job.type}'`;
       job.completedAt = new Date().toISOString();
+      this.persistJob(job);
       logger.error('Job failed: no handler', { jobId: job.id, type: job.type });
       this.emitEvent(job.id, {
         event: 'error',
@@ -475,6 +592,7 @@ export class JobQueue {
     job.status = 'running';
     job.startedAt = new Date().toISOString();
     job.attempts++;
+    this.persistJob(job);
 
     this.emitEvent(job.id, {
       event: 'status',
@@ -497,6 +615,9 @@ export class JobQueue {
       currentJob.progress = Math.min(100, Math.max(0, progress));
       if (message !== undefined) currentJob.statusMessage = message;
 
+      // Persist progress updates (fire-and-forget)
+      this.persistJob(currentJob);
+
       this.emitEvent(job.id, {
         event: 'progress',
         data: { jobId: job.id, progress: currentJob.progress, message: currentJob.statusMessage },
@@ -516,6 +637,8 @@ export class JobQueue {
         currentJob.result = result;
         currentJob.progress = 100;
         currentJob.completedAt = new Date().toISOString();
+
+        this.persistJob(currentJob);
 
         logger.info('Job completed', {
           jobId: job.id,
@@ -553,6 +676,7 @@ export class JobQueue {
           currentJob.status = 'queued';
           currentJob.progress = 0;
           currentJob.statusMessage = `Retrying (attempt ${currentJob.attempts + 1}/${maxRetries + 1})`;
+          this.persistJob(currentJob);
           this.insertIntoQueue(
             job.id,
             currentJob.options.priority ?? DEFAULT_PRIORITY,
@@ -568,6 +692,8 @@ export class JobQueue {
           currentJob.status = 'failed';
           currentJob.error = errorMessage;
           currentJob.completedAt = new Date().toISOString();
+
+          this.persistJob(currentJob);
 
           logger.error('Job failed', {
             jobId: job.id,
@@ -631,7 +757,18 @@ export class JobQueue {
       duration,
     };
 
-    const deliver = (attempt: number) => {
+    const deliver = async (attempt: number) => {
+      try {
+        await validateWebhookUrl(webhookUrl);
+      } catch (err) {
+        logger.error('Webhook SSRF blocked, not delivering', {
+          jobId: job.id,
+          webhookUrl,
+          error: err instanceof Error ? err.message : 'unknown',
+        });
+        return;
+      }
+
       fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -668,7 +805,8 @@ export class JobQueue {
   }
 
   /**
-   * Evict oldest completed jobs when the store exceeds the limit.
+   * Evict oldest completed jobs when the in-memory store exceeds the limit.
+   * Note: persistent store handles its own TTL-based expiration.
    */
   private evictCompletedJobs(): void {
     const completed: Array<{ id: string; completedAt: string }> = [];
@@ -687,7 +825,7 @@ export class JobQueue {
         this.jobs.delete(completed[i].id);
         this.progressListeners.delete(completed[i].id);
       }
-      logger.debug('Evicted completed jobs', { count: toRemove });
+      logger.debug('Evicted completed jobs from memory', { count: toRemove });
     }
   }
 }

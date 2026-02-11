@@ -422,7 +422,6 @@ export class AgenticExtractor {
     const headingCount = result.nodes.filter(
       (n) => n.type === 'heading',
     ).length;
-    const contentLength = result.contentText.length;
 
     return confidenceScorer.computeContentQuality(
       result.contentText,

@@ -8,6 +8,7 @@
  */
 
 import { logger } from '../utils/logger';
+import { CircuitBreaker } from '../utils/circuit-breaker';
 
 interface OllamaRequest {
   model: string;
@@ -48,6 +49,7 @@ export class OllamaExtractor {
   private readonly model: string;
   private readonly timeout: number;
   private isAvailable: boolean | null = null;
+  private readonly circuitBreaker: CircuitBreaker;
 
   constructor(
     baseUrl = 'http://localhost:11434',
@@ -57,6 +59,12 @@ export class OllamaExtractor {
     this.baseUrl = baseUrl;
     this.model = model;
     this.timeout = timeout;
+    this.circuitBreaker = new CircuitBreaker({
+      name: 'ollama',
+      failureThreshold: 3,
+      resetTimeoutMs: 60000,
+      halfOpenMaxAttempts: 1,
+    });
   }
 
   /**
@@ -133,53 +141,55 @@ CONTENT: [main content here]
 SUMMARY: [summary here]`;
 
     try {
-      const request: OllamaRequest = {
-        model: this.model,
-        prompt,
-        stream: false,
-        options: {
-          temperature: 0.3, // Lower = more focused
-          top_p: 0.9,
-          top_k: 40
+      return await this.circuitBreaker.execute(async () => {
+        const request: OllamaRequest = {
+          model: this.model,
+          prompt,
+          stream: false,
+          options: {
+            temperature: 0.3, // Lower = more focused
+            top_p: 0.9,
+            top_k: 40
+          }
+        };
+
+        logger.debug('Ollama extraction request', { model: this.model, htmlLength: html.length });
+
+        const response = await fetch(`${this.baseUrl}/api/generate`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(request),
+          signal: AbortSignal.timeout(this.timeout)
+        });
+
+        if (!response.ok) {
+          logger.error('Ollama request failed', { status: response.status });
+          throw new Error(`Ollama request failed with status ${response.status}`);
         }
-      };
 
-      logger.debug('Ollama extraction request', { model: this.model, htmlLength: html.length });
+        const data: OllamaResponse = await response.json();
+        const durationMs = Date.now() - startTime;
 
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(request),
-        signal: AbortSignal.timeout(this.timeout)
-      });
-
-      if (!response.ok) {
-        logger.error('Ollama request failed', { status: response.status });
-        return null;
-      }
-
-      const data: OllamaResponse = await response.json();
-      const durationMs = Date.now() - startTime;
-
-      logger.info('Ollama extraction complete', {
-        model: data.model,
-        durationMs,
-        responseLengthChars: data.response.length
-      });
-
-      // Parse response
-      const parsed = this.parseResponse(data.response);
-
-      return {
-        ...parsed,
-        metadata: {
-          method: 'ollama',
+        logger.info('Ollama extraction complete', {
           model: data.model,
-          durationMs
-        }
-      };
+          durationMs,
+          responseLengthChars: data.response.length
+        });
+
+        // Parse response
+        const parsed = this.parseResponse(data.response);
+
+        return {
+          ...parsed,
+          metadata: {
+            method: 'ollama' as const,
+            model: data.model,
+            durationMs
+          }
+        };
+      });
     } catch (error) {
       const durationMs = Date.now() - startTime;
       logger.error('Ollama extraction error', {

@@ -41,6 +41,7 @@ import { requestContextMiddleware } from './middleware/request-context';
 import { createAuthMiddleware, extractApiKeyMiddleware, getAuthConfigFromEnv } from './middleware/auth';
 import { createRateLimitMiddleware, getRateLimitConfigFromEnv } from './middleware/rate-limit';
 import { createAuditLogMiddleware, getAuditConfigFromEnv } from './middleware/audit-log';
+import { rateLimitPerTenantMiddleware } from './middleware/rate-limit-per-tenant';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import {
   createSecurityHeadersMiddleware,
@@ -132,7 +133,13 @@ if (authConfig.enabled) {
   logger.info('🔓 API authentication disabled (dev mode)');
 }
 
-// Apply rate limiting middleware
+// Apply per-tenant rate limiting middleware (after auth so tenant is attached)
+app.use('/v1', rateLimitPerTenantMiddleware);
+if (config.auth.enabled) {
+  logger.info('Per-tenant rate limiting enabled', { rateLimitPerKey: config.auth.rateLimitPerKey });
+}
+
+// Apply global rate limiting middleware
 if (rateLimitConfig.enabled) {
   app.use('/v1', createRateLimitMiddleware(rateLimitConfig));
   logger.info(`⏱️  Rate limiting enabled: ${rateLimitConfig.maxRequests} requests per ${rateLimitConfig.windowMs}ms`);
@@ -202,8 +209,11 @@ const server = app.listen(config.port, async () => {
     logger.error('watch manager init failed', { error: err.message });
   });
 
-  // Start job queue worker
+  // Initialize and start job queue worker
   const jobQueue = getJobQueue();
+  await jobQueue.init().catch((err: Error) => {
+    logger.error('job queue store init failed, using in-memory fallback', { error: err.message });
+  });
   jobQueue.start();
   logger.info('Job queue started');
 });

@@ -12,6 +12,7 @@
 import robotsParser from 'robots-parser';
 import { logger } from '../utils/logger';
 import { config } from '../config/env';
+import { validateUrl } from './url-validator';
 
 interface RobotsTxtEntry {
   robots: ReturnType<typeof robotsParser>;
@@ -54,6 +55,9 @@ export class RobotsManager {
     const robotsUrl = `${domain}/robots.txt`;
 
     try {
+      // SSRF protection: validate the robots.txt URL
+      await validateUrl(robotsUrl);
+
       logger.debug('RobotsManager: Fetching robots.txt', { robotsUrl });
 
       const response = await fetch(robotsUrl, {

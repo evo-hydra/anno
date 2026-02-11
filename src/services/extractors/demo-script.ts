@@ -7,10 +7,9 @@
  * @module demo-script
  */
 
-import { initializeMarketplaceSystem } from './index';
 import { ExtractionSession, telemetryManager } from './extraction-telemetry';
 import { extractionValidator, MARKETPLACE_VALIDATION_RULES } from './extraction-validator';
-import { logger } from '../../utils/logger';
+import type { MarketplaceListing, MarketplaceType } from './marketplace-adapter';
 
 /**
  * Demo configuration
@@ -33,7 +32,7 @@ interface DemoResult {
   extractionsSuccessful: number;
   extractionsFailed: number;
   avgConfidence: number;
-  telemetryReport: any;
+  telemetryReport: ReturnType<typeof telemetryManager.getMetrics> | null;
   errors: Array<{ url: string; error: string }>;
 }
 
@@ -173,7 +172,7 @@ export class MarketplaceDemoRunner {
 
     console.log(`\n  Extracting: ${url}`);
 
-    const session = new ExtractionSession(marketplace as any, url);
+    const session = new ExtractionSession(marketplace as MarketplaceType, url);
 
     try {
       // For demo purposes, we'll simulate extraction with realistic data
@@ -320,8 +319,8 @@ export class MarketplaceDemoRunner {
   /**
    * Create mock listing for demo (in production, use real extraction)
    */
-  private createMockListing(marketplace: string, url: string): any {
-    const mockData: Record<string, any> = {
+  private createMockListing(marketplace: string, url: string): MarketplaceListing {
+    const mockData: Record<string, MarketplaceListing> = {
       ebay: {
         id: '123456789',
         marketplace: 'ebay',

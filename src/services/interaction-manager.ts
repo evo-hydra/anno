@@ -348,7 +348,6 @@ export class InteractionManager {
 
     // We wrap in an async IIFE so callers can pass either expressions or statements.
     const result = await page.evaluate((expr) => {
-      // eslint-disable-next-line no-eval
       return eval(expr);
     }, expression);
 

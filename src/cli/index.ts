@@ -9,6 +9,7 @@ import { healthCommand } from './commands/health';
 import { fetchCommand } from './commands/fetch';
 import { crawlCommand } from './commands/crawl';
 
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 const pkg = require('../../package.json');
 
 const program = new Command();

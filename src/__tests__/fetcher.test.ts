@@ -1,4 +1,5 @@
 import { describe, it, beforeEach, afterEach, expect } from 'vitest';
+import { promises as dns } from 'dns';
 import { fetchPage } from '../services/fetcher';
 import {
   resetMetrics,
@@ -11,6 +12,7 @@ import { rendererManager } from '../services/renderer';
 import type { RendererStatus } from '../services/renderer';
 import type { Page, BrowserContext } from 'playwright-core';
 import { rateLimiter } from '../core/rate-limiter';
+import { ErrorCode } from '../middleware/error-handler';
 
 const originalRateLimiter = {
   checkLimit: rateLimiter.checkLimit.bind(rateLimiter),
@@ -299,5 +301,70 @@ describe('metrics', () => {
     expect(output.includes('# TYPE anno_fetch_total counter')).toBe(true);
     expect(output.includes('anno_last_request_timestamp')).toBe(true);
     expect(output.includes('anno_render_duration_seconds_bucket{le="0.1"} 0')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// SSRF protection
+// ---------------------------------------------------------------------------
+
+const originalDnsLookup = dns.lookup;
+
+describe('fetchPage SSRF protection', () => {
+  let originalSsrf: typeof config.ssrf;
+
+  beforeEach(() => {
+    originalSsrf = { ...config.ssrf, allowedHosts: [...config.ssrf.allowedHosts], blockedHosts: [...config.ssrf.blockedHosts] };
+    config.ssrf.enabled = true;
+    config.ssrf.allowedHosts = [];
+    config.ssrf.blockedHosts = [];
+    config.ssrf.allowPrivateIPs = false;
+  });
+
+  afterEach(() => {
+    config.ssrf.enabled = originalSsrf.enabled;
+    config.ssrf.allowedHosts = originalSsrf.allowedHosts;
+    config.ssrf.blockedHosts = originalSsrf.blockedHosts;
+    config.ssrf.allowPrivateIPs = originalSsrf.allowPrivateIPs;
+    (dns as unknown as { lookup: typeof dns.lookup }).lookup = originalDnsLookup;
+  });
+
+  it('rejects fetch to private IP address', async () => {
+    await expect(
+      fetchPage({ url: 'http://127.0.0.1/secret', useCache: false, mode: 'http' })
+    ).rejects.toMatchObject({ code: ErrorCode.SSRF_BLOCKED });
+  });
+
+  it('rejects fetch with hostname resolving to private IP', async () => {
+    (dns as unknown as { lookup: typeof dns.lookup }).lookup = async () =>
+      [{ address: '10.0.0.1', family: 4 }] as never;
+
+    await expect(
+      fetchPage({ url: 'http://evil.internal/admin', useCache: false, mode: 'http' })
+    ).rejects.toMatchObject({ code: ErrorCode.SSRF_BLOCKED });
+  });
+
+  it('allows fetch to public URL (existing behavior preserved)', async () => {
+    (dns as unknown as { lookup: typeof dns.lookup }).lookup = async () =>
+      [{ address: '93.184.216.34', family: 4 }] as never;
+
+    const originalFetchFn = global.fetch;
+    global.fetch = async () =>
+      new Response('<html><body>public content</body></html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html' },
+      });
+
+    try {
+      const result = await fetchPage({
+        url: 'https://example.com/page',
+        useCache: false,
+        mode: 'http',
+      });
+      expect(result.status).toBe(200);
+      expect(result.body).toContain('public content');
+    } finally {
+      global.fetch = originalFetchFn;
+    }
   });
 });

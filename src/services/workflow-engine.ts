@@ -201,7 +201,6 @@ function evaluateCondition(expression: string, variables: Record<string, unknown
   // Build a function that receives variables as named arguments
   const keys = Object.keys(variables);
   const values = keys.map((k) => variables[k]);
-  // eslint-disable-next-line no-new-func
   const fn = new Function(...keys, `return (${expression});`);
   return fn(...values);
 }
@@ -710,7 +709,6 @@ export class WorkflowEngine {
     if (step.fromEval) {
       // Evaluate JS expression in the page context
       resolvedValue = await page.evaluate((expr: string) => {
-        // eslint-disable-next-line no-eval
         return eval(expr);
       }, step.fromEval);
     } else if (step.fromSelector) {

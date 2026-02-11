@@ -181,9 +181,9 @@ class RendererManager {
           Object.defineProperty(navigator, 'webdriver', { get: () => false });
 
           // Remove automation indicators
-          delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Array;
-          delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-          delete (window as any).cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Array;
+          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
 
           // Add realistic plugins
           Object.defineProperty(navigator, 'plugins', {
@@ -205,8 +205,8 @@ class RendererManager {
           });
 
           // Mock permissions
-          const originalQuery = window.navigator.permissions.query;
-          (window.navigator.permissions as any).query = (parameters: any) =>
+          const originalQuery = window.navigator.permissions.query.bind(window.navigator.permissions);
+          (window.navigator.permissions as unknown as Record<string, unknown>).query = (parameters: PermissionDescriptor) =>
             parameters.name === 'notifications'
               ? Promise.resolve({ state: 'denied' } as PermissionStatus)
               : originalQuery(parameters);
@@ -257,7 +257,8 @@ class RendererManager {
           };
 
           // Audio fingerprinting protection
-          const audioContext = (window as any).AudioContext || (window as any).webkitAudioContext;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const audioContext = (window as unknown as Record<string, any>).AudioContext || (window as unknown as Record<string, any>).webkitAudioContext;
           if (audioContext) {
             const originalGetChannelData = audioContext.prototype.getChannelData;
             audioContext.prototype.getChannelData = function () {

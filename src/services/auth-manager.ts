@@ -22,7 +22,7 @@ import { readFile, writeFile, readdir, unlink, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '../utils/logger';
-import { getSessionManager, type SessionManager } from './session-manager';
+import { getSessionManager } from './session-manager';
 import { interactionManager } from './interaction-manager';
 
 // ---------------------------------------------------------------------------

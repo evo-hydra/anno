@@ -23,7 +23,6 @@ import {
   OrchestratorGetOptions,
   OrchestratorResult,
   MultiSourceResult,
-  CHANNEL_TIER_MAP,
 } from './marketplace-adapter';
 
 // ============================================================================

@@ -2,11 +2,9 @@
  * Tests for eBay Search Adapter
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ebaySearchAdapter, EbaySearchAdapter } from '../services/extractors/ebay-search-adapter';
-import { SearchOptions } from '../services/extractors/marketplace-adapter';
-import * as fs from 'fs';
-import * as path from 'path';
+import type { MarketplaceListing } from '../services/extractors/marketplace-adapter';
 
 describe('EbaySearchAdapter', () => {
   let adapter: EbaySearchAdapter;
@@ -177,31 +175,31 @@ describe('EbaySearchAdapter', () => {
           url: 'https://example.com/1',
           listing: {
             price: { amount: 100, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
         {
           url: 'https://example.com/2',
           listing: {
             price: { amount: 200, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
         {
           url: 'https://example.com/3',
           listing: {
             price: { amount: 300, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
         {
           url: 'https://example.com/4',
           listing: {
             price: { amount: 400, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
         {
           url: 'https://example.com/5',
           listing: {
             price: { amount: 500, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
       ];
 
@@ -228,13 +226,13 @@ describe('EbaySearchAdapter', () => {
           url: 'https://example.com/1',
           listing: {
             price: null,
-          } as any,
+          } as MarketplaceListing,
         },
         {
           url: 'https://example.com/2',
           listing: {
             price: { amount: 200, currency: 'USD' },
-          } as any,
+          } as MarketplaceListing,
         },
       ];
 
@@ -246,10 +244,10 @@ describe('EbaySearchAdapter', () => {
 
     it('should calculate median correctly for even number of items', () => {
       const mockResults = [
-        { url: '', listing: { price: { amount: 100, currency: 'USD' } } as any },
-        { url: '', listing: { price: { amount: 200, currency: 'USD' } } as any },
-        { url: '', listing: { price: { amount: 300, currency: 'USD' } } as any },
-        { url: '', listing: { price: { amount: 400, currency: 'USD' } } as any },
+        { url: '', listing: { price: { amount: 100, currency: 'USD' } } as MarketplaceListing },
+        { url: '', listing: { price: { amount: 200, currency: 'USD' } } as MarketplaceListing },
+        { url: '', listing: { price: { amount: 300, currency: 'USD' } } as MarketplaceListing },
+        { url: '', listing: { price: { amount: 400, currency: 'USD' } } as MarketplaceListing },
       ];
 
       const stats = adapter.aggregatePrices(mockResults);
@@ -317,7 +315,7 @@ describe('EbaySearchAdapter', () => {
     it('should extend EbayAdapterV2', () => {
       expect(adapter.marketplaceId).toBe('ebay');
       expect(adapter.name).toBe('eBay Marketplace Adapter');
-      expect(adapter.version).toBe('2.0.0');
+      expect(adapter.version).toBe('2.1.0');
     });
   });
 });

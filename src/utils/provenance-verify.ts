@@ -121,7 +121,7 @@ export const extractTextFromSpan = (span: SourceSpan, originalHtml: string): str
     }
 
     return originalHtml.substring(span.byteStart, span.byteEnd);
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };

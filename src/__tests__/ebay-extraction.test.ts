@@ -11,6 +11,39 @@ const loadFixture = (filename: string): string => {
   return readFileSync(join(fixturesDir, filename), 'utf-8');
 };
 
+/**
+ * Minimal eBay item page HTML with the selectors the adapter expects.
+ */
+const EBAY_ITEM_HTML = `<!DOCTYPE html>
+<html>
+<head><title>Test eBay Item</title></head>
+<body>
+  <h1 class="x-item-title__mainTitle">
+    <span class="ux-textspans">Nintendo Switch OLED Console - White</span>
+  </h1>
+  <div class="x-price-primary">
+    <span class="ux-textspans">US $299.99</span>
+  </div>
+  <div class="vi-bboxrev-postiontop">Sold on Nov 3, 2024</div>
+  <div data-testid="x-item-condition-value">
+    <span class="ux-textspans">Used</span>
+  </div>
+  <div data-testid="ux-item-number">
+    <span class="ux-textspans">256473841777</span>
+  </div>
+  <div class="ux-labels-values--shipping">
+    <span>US $10.00</span>
+  </div>
+  <div class="x-sellercard-atf__info__about-seller">
+    <a href="/usr/testSeller">testSeller</a>
+  </div>
+  <div class="x-sellercard-atf__data--rating">99.5% positive</div>
+  <div class="ux-image-carousel-item">
+    <img src="https://i.ebayimg.com/images/test.jpg" />
+  </div>
+</body>
+</html>`;
+
 describe('ebaySearchAdapter', () => {
   it('detects sold-search URLs', () => {
     expect(
@@ -62,9 +95,7 @@ describe('distillContent with eBay adapters', () => {
   });
 
   it('uses ebay-adapter for item pages', async () => {
-    const html = readFileSync(join(process.cwd(), 'test-ebay-mock.html'), 'utf-8');
-
-    const result = await distillContent(html, 'https://www.ebay.com/itm/256473841777');
+    const result = await distillContent(EBAY_ITEM_HTML, 'https://www.ebay.com/itm/256473841777');
 
     expect(result.extractionMethod).toBe('ebay-adapter');
     expect(result.ebayData).toBeTruthy();
@@ -74,8 +105,7 @@ describe('distillContent with eBay adapters', () => {
 
 describe('ebayAdapter', () => {
   it('extractLegacy captures listing data', () => {
-    const html = readFileSync(join(process.cwd(), 'test-ebay-mock.html'), 'utf-8');
-    const result = ebayAdapter.extractLegacy(html, 'https://www.ebay.com/itm/256473841777');
+    const result = ebayAdapter.extractLegacy(EBAY_ITEM_HTML, 'https://www.ebay.com/itm/256473841777');
 
     expect(result.title.length > 0).toBe(true);
     expect(result.currency).toBe('USD');

@@ -172,7 +172,7 @@ export class EbaySearchAdapter extends EbayAdapterV2 implements MarketplaceSearc
   async parseSearchResultsFromHtml(
     html: string,
     query: string,
-    options?: SearchOptions
+    _options?: SearchOptions
   ): Promise<SearchResponse> {
     const results = await this.parseSearchResults(html);
     const priceStats = this.aggregatePrices(results);

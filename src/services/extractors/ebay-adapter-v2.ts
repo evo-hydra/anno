@@ -42,7 +42,7 @@ export class EbayAdapterV2 implements MarketplaceAdapter {
   async extract(
     html: string,
     url: string,
-    options?: ExtractionOptions
+    _options?: ExtractionOptions
   ): Promise<MarketplaceListing | null> {
     const dom = new JSDOM(html);
     const document = dom.window.document;

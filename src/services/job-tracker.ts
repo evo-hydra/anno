@@ -19,7 +19,7 @@ export interface JobItem {
   lastAttempt?: number;
   completedAt?: number;
   error?: string;
-  data?: any;
+  data?: unknown;
 }
 
 export interface JobProgress {
@@ -180,7 +180,7 @@ export class JobTracker {
   /**
    * Mark item as completed
    */
-  markCompleted(itemId: string, data?: any): void {
+  markCompleted(itemId: string, data?: unknown): void {
     const item = this.progress.items.get(itemId);
     if (!item) return;
 
@@ -369,15 +369,15 @@ export class JobTracker {
   /**
    * Export completed items data
    */
-  exportData(): any[] {
-    const results: any[] = [];
+  exportData(): Record<string, unknown>[] {
+    const results: Record<string, unknown>[] = [];
 
     for (const item of this.progress.items.values()) {
       if (item.status === 'completed' && item.data) {
         results.push({
           url: item.url,
           completedAt: item.completedAt,
-          ...item.data
+          ...(item.data as Record<string, unknown>)
         });
       }
     }

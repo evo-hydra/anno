@@ -210,7 +210,7 @@ export class BrowserExtensionAdapter implements DataSourceAdapter {
 
   async extractWithProvenance(
     content: string,
-    url: string,
+    _url: string,
     _options?: ExtractionOptions
   ): Promise<MarketplaceListingWithProvenance | null> {
     try {
@@ -300,7 +300,7 @@ export class BrowserExtensionAdapter implements DataSourceAdapter {
    */
   async extractAllItems(
     content: string,
-    url: string,
+    _url: string,
     _options?: ExtractionOptions
   ): Promise<MarketplaceListingWithProvenance[]> {
     try {

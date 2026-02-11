@@ -14,7 +14,7 @@
  * @module services/persistent-session-manager
  */
 
-import { type Browser, type BrowserContext, type Page } from 'playwright-core';
+import { type BrowserContext, type Page } from 'playwright-core';
 import { readFile, writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -429,8 +429,8 @@ export class PersistentSessionManager {
   /**
    * Get session statistics
    */
-  getStats(): Record<string, any> {
-    const stats: Record<string, any> = {};
+  getStats(): Record<string, { age: number; lastUsed: number; requestCount: number; warmed: boolean }> {
+    const stats: Record<string, { age: number; lastUsed: number; requestCount: number; warmed: boolean }> = {};
 
     for (const [domain, session] of this.sessions.entries()) {
       stats[domain] = {

@@ -765,7 +765,7 @@ export class BackfillExecutor {
    */
   private async createUrlSource(job: BackfillJob): Promise<UrlSource> {
     if (job.urlSource.type === 'file') {
-      return FileUrlSource.fromFile(job.urlSource.config.filePath);
+      return FileUrlSource.fromFile(job.urlSource.config.filePath as string);
     } else {
       throw new Error(`Unsupported URL source type: ${job.urlSource.type}`);
     }

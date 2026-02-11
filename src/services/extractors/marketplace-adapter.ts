@@ -177,7 +177,7 @@ export interface MarketplaceListing {
   // Metadata
   itemNumber?: string; // Marketplace-specific SKU/item number
   category?: string[]; // Breadcrumb array
-  attributes?: Record<string, any>; // Marketplace-specific attributes
+  attributes?: Record<string, unknown>; // Marketplace-specific attributes
 
   // Extraction metadata
   extractedAt: string; // ISO 8601 timestamp
@@ -462,7 +462,7 @@ export interface BackfillJob {
   // URL source
   urlSource: {
     type: 'file' | 'database' | 'generator';
-    config: any; // Source-specific config
+    config: Record<string, unknown>; // Source-specific config
   };
 
   // Execution parameters

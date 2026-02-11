@@ -1,179 +1,156 @@
 /**
- * API Authentication Middleware
+ * API Key Authentication Middleware with Multi-Tenancy
  *
- * Provides API key-based authentication for securing endpoints.
- * Supports multiple keys for different clients/services.
+ * Provides API key-based authentication and tenant identification.
+ * Supports Bearer token and X-API-Key header extraction.
  *
  * @module middleware/auth
  */
 
 import type { Request, Response, NextFunction } from 'express';
-import { createHash } from 'node:crypto';
+import { createHash } from 'crypto';
+import { config } from '../config/env';
+import { AppError, ErrorCode } from './error-handler';
+import { logger } from '../utils/logger';
 
-export interface AuthConfig {
-  /** Whether authentication is enabled (default: false for dev) */
-  enabled: boolean;
-
-  /** List of valid API keys (plain text or SHA-256 hashes) */
-  apiKeys: string[];
-
-  /** Header name for API key (default: 'X-API-Key') */
-  headerName?: string;
-
-  /** Whether to allow bypass in development mode */
-  allowDevBypass?: boolean;
+declare global {
+  // eslint-disable-next-line @typescript-eslint/no-namespace
+  namespace Express {
+    interface Request {
+      tenant?: {
+        id: string;
+        authenticated: boolean;
+      };
+    }
+  }
 }
 
-export interface AuthenticatedRequest extends Request {
-  /** API key that was used for authentication */
-  apiKey?: string;
-
-  /** Hash of the API key (for logging) */
-  apiKeyHash?: string;
-}
+const DEFAULT_TENANT_ID = 'default';
 
 /**
- * Hash an API key for secure storage/comparison
+ * Hash an API key to produce a tenant ID.
+ * Never store or log raw keys.
  */
 export function hashApiKey(apiKey: string): string {
   return createHash('sha256').update(apiKey).digest('hex');
 }
 
 /**
- * Verify if a provided key matches any of the configured keys
+ * Extract API key from request headers.
+ * Checks Authorization: Bearer <key> first, then x-api-key header.
  */
-function verifyApiKey(providedKey: string, configuredKeys: string[]): { valid: boolean; keyHash: string } {
-  const providedHash = hashApiKey(providedKey);
-
-  for (const configuredKey of configuredKeys) {
-    // Support both plain text keys and pre-hashed keys
-    const configuredHash = configuredKey.length === 64 && /^[a-f0-9]+$/i.test(configuredKey)
-      ? configuredKey.toLowerCase()
-      : hashApiKey(configuredKey);
-
-    if (providedHash === configuredHash) {
-      return { valid: true, keyHash: providedHash };
-    }
+function extractKey(req: Request): string | undefined {
+  const authHeader = req.get('authorization');
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    return authHeader.slice(7).trim();
   }
 
-  return { valid: false, keyHash: providedHash };
+  const xApiKey = req.get('x-api-key');
+  if (xApiKey) {
+    return xApiKey;
+  }
+
+  return undefined;
 }
 
 /**
- * Create authentication middleware
- *
- * @example
- * ```typescript
- * const authMiddleware = createAuthMiddleware({
- *   enabled: true,
- *   apiKeys: ['secret-key-1', 'secret-key-2']
- * });
- * app.use('/v1', authMiddleware);
- * ```
+ * Attach default (unauthenticated) tenant info to the request.
  */
-export function createAuthMiddleware(config: AuthConfig) {
-  const {
-    enabled = false,
-    apiKeys = [],
-    headerName = 'X-API-Key',
-    allowDevBypass = true
-  } = config;
-
-  return function authMiddleware(
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ): void {
-    // Skip auth if disabled
-    if (!enabled) {
-      next();
-      return;
-    }
-
-    // Allow bypass in development mode (NODE_ENV !== 'production')
-    if (allowDevBypass && process.env.NODE_ENV !== 'production') {
-      next();
-      return;
-    }
-
-    // No keys configured - fail closed for security
-    if (apiKeys.length === 0) {
-      res.status(500).json({
-        error: 'Authentication is enabled but no API keys are configured'
-      });
-      return;
-    }
-
-    // Extract API key from header
-    const providedKey = req.headers[headerName.toLowerCase()] as string | undefined;
-
-    if (!providedKey) {
-      res.status(401).json({
-        error: 'Missing API key',
-        message: `Please provide an API key in the '${headerName}' header`
-      });
-      return;
-    }
-
-    // Verify API key
-    const { valid, keyHash } = verifyApiKey(providedKey, apiKeys);
-
-    if (!valid) {
-      res.status(403).json({
-        error: 'Invalid API key',
-        message: 'The provided API key is not authorized'
-      });
-      return;
-    }
-
-    // Attach auth metadata to request
-    const authReq = req as AuthenticatedRequest;
-    authReq.apiKey = providedKey;
-    authReq.apiKeyHash = keyHash;
-
-    next();
+function attachDefaultTenant(req: Request): void {
+  req.tenant = {
+    id: DEFAULT_TENANT_ID,
+    authenticated: false,
   };
 }
 
 /**
- * Optional middleware to extract API key without requiring it
- * Useful for endpoints that track usage by key but don't require auth
+ * API key authentication middleware.
+ *
+ * - If auth is disabled, passes through with a default tenant.
+ * - If bypassInDev is true and NODE_ENV !== 'production', passes through with a default tenant.
+ * - Validates key against configured apiKeys list.
+ * - On valid key, attaches tenant info (hashed key as tenant ID).
+ * - On missing/invalid key, responds with 401.
  */
-export function extractApiKeyMiddleware(headerName = 'X-API-Key') {
+export function authMiddleware(req: Request, _res: Response, next: NextFunction): void {
+  // Skip auth if disabled
+  if (!config.auth.enabled) {
+    attachDefaultTenant(req);
+    next();
+    return;
+  }
+
+  // Skip auth in dev mode when bypassInDev is true
+  if (config.auth.bypassInDev && process.env.NODE_ENV !== 'production') {
+    attachDefaultTenant(req);
+    next();
+    return;
+  }
+
+  const key = extractKey(req);
+
+  if (!key) {
+    next(new AppError(
+      ErrorCode.UNAUTHORIZED,
+      'Missing API key. Provide via Authorization: Bearer <key> or x-api-key header.',
+      401
+    ));
+    return;
+  }
+
+  const keyHash = hashApiKey(key);
+  const isValid = config.auth.apiKeys.some(configuredKey => {
+    const configuredHash = hashApiKey(configuredKey);
+    return keyHash === configuredHash;
+  });
+
+  if (!isValid) {
+    logger.warn('Invalid API key attempt', { keyHashPrefix: keyHash.slice(0, 8) });
+    next(new AppError(
+      ErrorCode.UNAUTHORIZED,
+      'Invalid API key.',
+      401
+    ));
+    return;
+  }
+
+  req.tenant = {
+    id: keyHash,
+    authenticated: true,
+  };
+
+  next();
+}
+
+// Re-export types and helpers used by existing server.ts imports
+export interface AuthConfig {
+  enabled: boolean;
+  apiKeys: string[];
+  headerName?: string;
+  allowDevBypass?: boolean;
+}
+
+export interface AuthenticatedRequest extends Request {
+  apiKey?: string;
+  apiKeyHash?: string;
+}
+
+export function createAuthMiddleware(_authConfig: AuthConfig) {
+  return authMiddleware;
+}
+
+export function extractApiKeyMiddleware(_headerName = 'X-API-Key') {
   return function (req: Request, _res: Response, next: NextFunction): void {
-    const providedKey = req.headers[headerName.toLowerCase()] as string | undefined;
-
-    if (providedKey) {
-      const authReq = req as AuthenticatedRequest;
-      authReq.apiKey = providedKey;
-      authReq.apiKeyHash = hashApiKey(providedKey);
-    }
-
+    attachDefaultTenant(req);
     next();
   };
 }
 
-/**
- * Helper to get auth config from environment variables
- *
- * Supports:
- * - API_AUTH_ENABLED=true/false
- * - API_KEYS=key1,key2,key3 (comma-separated)
- * - API_KEY_HEADER=X-Custom-Header
- */
 export function getAuthConfigFromEnv(): AuthConfig {
-  const enabled = process.env.API_AUTH_ENABLED === 'true';
-
-  const apiKeys = process.env.API_KEYS
-    ? process.env.API_KEYS.split(',').map(k => k.trim()).filter(k => k.length > 0)
-    : [];
-
-  const headerName = process.env.API_KEY_HEADER || 'X-API-Key';
-
   return {
-    enabled,
-    apiKeys,
-    headerName,
-    allowDevBypass: true
+    enabled: config.auth.enabled,
+    apiKeys: config.auth.apiKeys,
+    headerName: 'X-API-Key',
+    allowDevBypass: config.auth.bypassInDev,
   };
 }

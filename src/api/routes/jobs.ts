@@ -77,7 +77,7 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
 // GET /  — List jobs with optional filters
 // ---------------------------------------------------------------------------
 
-router.get('/', (_req: Request, res: Response) => {
+router.get('/', asyncHandler(async (_req: Request, res: Response) => {
   const queue = getJobQueue();
 
   // Parse query filters
@@ -94,23 +94,23 @@ router.get('/', (_req: Request, res: Response) => {
     filter.type = typeParam as JobType;
   }
 
-  const jobs = queue.listJobs(Object.keys(filter).length > 0 ? filter : undefined);
+  const jobs = await queue.listJobs(Object.keys(filter).length > 0 ? filter : undefined);
 
   res.json({
     jobs,
     count: jobs.length,
     stats: queue.getStats(),
   });
-});
+}));
 
 // ---------------------------------------------------------------------------
 // GET /:jobId  — Get job status and progress
 // ---------------------------------------------------------------------------
 
-router.get('/:jobId', (req: Request, res: Response) => {
+router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
   const { jobId } = req.params;
   const queue = getJobQueue();
-  const job = queue.getJob(jobId);
+  const job = await queue.getJob(jobId);
 
   if (!job) {
     res.status(404).json({
@@ -123,17 +123,17 @@ router.get('/:jobId', (req: Request, res: Response) => {
   }
 
   res.json(job);
-});
+}));
 
 // ---------------------------------------------------------------------------
 // DELETE /:jobId  — Cancel a job
 // ---------------------------------------------------------------------------
 
-router.delete('/:jobId', (req: Request, res: Response) => {
+router.delete('/:jobId', asyncHandler(async (req: Request, res: Response) => {
   const { jobId } = req.params;
   const queue = getJobQueue();
 
-  const job = queue.getJob(jobId);
+  const job = await queue.getJob(jobId);
   if (!job) {
     res.status(404).json({
       error: 'job_not_found',
@@ -162,7 +162,7 @@ router.delete('/:jobId', (req: Request, res: Response) => {
     status: 'cancelled',
     message: 'Job has been cancelled',
   });
-});
+}));
 
 // ---------------------------------------------------------------------------
 // GET /:jobId/stream  — SSE progress stream
@@ -171,7 +171,7 @@ router.delete('/:jobId', (req: Request, res: Response) => {
 router.get('/:jobId/stream', async (req: Request, res: Response) => {
   const { jobId } = req.params;
   const queue = getJobQueue();
-  const job = queue.getJob(jobId);
+  const job = await queue.getJob(jobId);
 
   if (!job) {
     res.status(404).json({

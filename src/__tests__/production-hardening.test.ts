@@ -5,11 +5,10 @@
  * Zero tolerance for silent failures.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   ExtractionValidator,
   MARKETPLACE_VALIDATION_RULES,
-  type ValidationIssue,
 } from '../services/extractors/extraction-validator';
 import {
   ExtractionSession,
@@ -52,15 +51,16 @@ describe('ExtractionValidator - Production Standards', () => {
   });
 
   it('should detect missing required fields', () => {
-    const listing: any = {
+    // Intentionally incomplete listing to test validation of missing fields
+    const listing = {
       id: '123',
-      marketplace: 'ebay',
+      marketplace: 'ebay' as const,
       url: 'https://ebay.com/itm/123',
       // Missing title (required)
       confidence: 0.9,
       extractedAt: new Date().toISOString(),
       extractorVersion: '1.0.0',
-    };
+    } as unknown as MarketplaceListing;
 
     const rules = MARKETPLACE_VALIDATION_RULES.ebay;
     const report = validator.validate(listing, rules);
@@ -73,15 +73,16 @@ describe('ExtractionValidator - Production Standards', () => {
   });
 
   it('should provide actionable error suggestions', () => {
-    const listing: any = {
+    // Intentionally incomplete listing to test actionable error suggestions
+    const listing = {
       id: '123',
-      marketplace: 'ebay',
+      marketplace: 'ebay' as const,
       url: 'https://ebay.com/itm/123',
       title: '',
       confidence: 0.5,
       extractedAt: new Date().toISOString(),
       extractorVersion: '1.0.0',
-    };
+    } as unknown as MarketplaceListing;
 
     const rules = MARKETPLACE_VALIDATION_RULES.ebay;
     const report = validator.validate(listing, rules);
@@ -119,7 +120,7 @@ describe('ExtractionValidator - Production Standards', () => {
   });
 
   it('should validate data types strictly', () => {
-    const listing: any = {
+    const listing: MarketplaceListing = {
       id: '123',
       marketplace: 'ebay',
       url: 'not-a-valid-url',

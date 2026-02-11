@@ -86,7 +86,7 @@ export interface TelemetryEvent {
   };
 
   // Metadata
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -228,6 +228,7 @@ export class TelemetryManager {
     successfulExtractions: number;
     failedExtractions: number;
     totalDuration: number;
+    totalConfidence: number;
     rateLimitHits: number;
     cacheHits: number;
     cacheMisses: number;
@@ -237,6 +238,7 @@ export class TelemetryManager {
     successfulExtractions: 0,
     failedExtractions: 0,
     totalDuration: 0,
+    totalConfidence: 0,
     rateLimitHits: 0,
     cacheHits: 0,
     cacheMisses: 0,
@@ -293,6 +295,7 @@ export class TelemetryManager {
         this.metrics.totalExtractions++;
         this.metrics.successfulExtractions++;
         if (event.duration) this.metrics.totalDuration += event.duration;
+        if (event.confidence) this.metrics.totalConfidence += event.confidence;
         if (event.fallbacksTriggered) this.metrics.fallbacksUsed += event.fallbacksTriggered;
         break;
 
@@ -319,7 +322,7 @@ export class TelemetryManager {
   /**
    * Get aggregated metrics
    */
-  getMetrics(): typeof this.metrics & { avgDuration: number; successRate: number; cacheHitRate: number } {
+  getMetrics(): typeof this.metrics & { avgDuration: number; successRate: number; cacheHitRate: number; averageConfidence: number } {
     const avgDuration = this.metrics.totalExtractions > 0
       ? this.metrics.totalDuration / this.metrics.totalExtractions
       : 0;
@@ -333,11 +336,16 @@ export class TelemetryManager {
       ? this.metrics.cacheHits / totalCacheOps
       : 0;
 
+    const averageConfidence = this.metrics.successfulExtractions > 0
+      ? this.metrics.totalConfidence / this.metrics.successfulExtractions
+      : 0;
+
     return {
       ...this.metrics,
       avgDuration,
       successRate,
       cacheHitRate,
+      averageConfidence,
     };
   }
 
@@ -494,6 +502,7 @@ export class TelemetryManager {
       successfulExtractions: 0,
       failedExtractions: 0,
       totalDuration: 0,
+      totalConfidence: 0,
       rateLimitHits: 0,
       cacheHits: 0,
       cacheMisses: 0,

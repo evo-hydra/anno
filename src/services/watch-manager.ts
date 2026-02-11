@@ -9,13 +9,13 @@
  */
 
 import { randomUUID } from 'crypto';
-import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger';
 import { diffEngine } from './diff-engine';
 import { fetchPage } from './fetcher';
 import { distillContent } from './distiller';
+import { validateWebhookUrl } from '../core/url-validator';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -440,6 +440,9 @@ export class WatchManager {
   // -----------------------------------------------------------------------
 
   private async fireWebhook(webhookUrl: string, event: WatchEvent): Promise<void> {
+    // SSRF protection: validate webhook URL before sending
+    await validateWebhookUrl(webhookUrl);
+
     logger.info('Firing webhook', { webhookUrl, watchId: event.watchId });
 
     // Use a dynamic import for http/https to keep things simple

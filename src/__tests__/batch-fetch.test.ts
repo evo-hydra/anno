@@ -1,11 +1,16 @@
 /**
  * Batch Fetch Tests
- * Tests for multi-source parallel fetching endpoint (ANNO-601)
+ * Integration tests for multi-source parallel fetching endpoint (ANNO-601)
+ *
+ * These tests require a running Anno server on port 5213.
+ * Run with: INTEGRATION=true npx vitest run src/__tests__/batch-fetch.test.ts
  */
 
 import { describe, it, expect } from 'vitest';
 
-describe('Batch Fetch Endpoint', () => {
+const INTEGRATION = process.env.INTEGRATION === 'true';
+
+describe.skipIf(!INTEGRATION)('Batch Fetch Endpoint (integration)', () => {
   const BATCH_URL = 'http://localhost:5213/v1/content/batch-fetch';
 
   it('should fetch multiple URLs in parallel', async () => {

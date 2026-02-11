@@ -23,6 +23,7 @@ const WORKFLOW_TIMEOUT_MS = 120_000;
 // Zod schemas
 // ---------------------------------------------------------------------------
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- recursive Zod schema requires any
 const workflowStepSchema: z.ZodType<any> = z.lazy(() =>
   z.discriminatedUnion('type', [
     z.object({
@@ -142,8 +143,6 @@ router.post('/', asyncHandler(async (req: Request, res: Response) => {
     stepCount: workflow.steps.length,
     hasVariables: !!workflow.variables,
   });
-
-  const overallStart = Date.now();
 
   // Set a request-level timeout
   req.setTimeout(WORKFLOW_TIMEOUT_MS);

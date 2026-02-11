@@ -238,14 +238,14 @@ export async function exportMarketplaceConfig(
   logger.info('Exporting marketplace configurations', { outputPath });
 
   const marketplaces = registry.getRegisteredMarketplaces();
-  const configData: any = {
+  const configData: MarketplaceConfigFile = {
     marketplaces: {},
   };
 
   for (const marketplaceId of marketplaces) {
     const config = registry.getConfig(marketplaceId);
     if (config) {
-      const { marketplaceId: _, ...configWithoutId } = config;
+      const { marketplaceId: _marketplaceId, ...configWithoutId } = config;
       configData.marketplaces[marketplaceId] = configWithoutId;
     }
   }

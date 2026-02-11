@@ -113,7 +113,6 @@ const createNodesFromFragment = (fragmentHtml: string): DistilledNode[] => {
 
   const serializeWithLinks = (el: HTMLElement): string => {
     // Preserve anchor text with URL for better recall
-    const walker = el.ownerDocument?.createTreeWalker(el, 4 /* SHOW_TEXT */) as any;
     // Fallback simple approach: replace <a> with "text (link: URL)"
     const clone = el.cloneNode(true) as HTMLElement;
     clone.querySelectorAll('a[href]')?.forEach((a) => {
@@ -174,7 +173,6 @@ const createSourceSpan = (
 export const distillContent = async (html: string, baseUrl: string, policyHint?: string): Promise<DistillationResult> => {
   // Compute content hash for provenance
   const contentHash = computeContentHash(html);
-  const timestamp = Date.now();
 
   // Initialize policy engine if not already done
   await policyEngine.init();
@@ -411,7 +409,7 @@ export const distillContent = async (html: string, baseUrl: string, policyHint?:
     if (traf && traf.content && traf.content.trim().length > 0) {
       const paragraphCount = traf.content.split('\n\n').filter(p => p.trim().length > 0).length;
       candidates.push({
-        method: 'trafilatura' as any,
+        method: 'trafilatura',
         title: traf.title,
         content: traf.content,
         paragraphCount,

@@ -8,7 +8,7 @@
  */
 
 import { randomUUID } from 'crypto';
-import { writeFile, appendFile } from 'fs/promises';
+import { appendFile } from 'fs/promises';
 import { logger } from '../../utils/logger';
 import {
   ExtractionEvent,

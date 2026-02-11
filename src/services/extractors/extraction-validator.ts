@@ -23,8 +23,8 @@ export interface ValidationIssue {
   field: string;
   code: string;
   message: string;
-  expected?: any;
-  actual?: any;
+  expected?: unknown;
+  actual?: unknown;
   suggestion?: string;
 }
 
@@ -50,7 +50,7 @@ export interface ValidationRules {
   recommended: string[];
   optional: string[];
   minConfidence: number;
-  fieldValidators?: Record<string, (value: any) => ValidationIssue | null>;
+  fieldValidators?: Record<string, (value: unknown) => ValidationIssue | null>;
 }
 
 /**
@@ -183,7 +183,7 @@ export class ExtractionValidator {
   /**
    * Check if listing has a non-empty value for field
    */
-  private hasValue(listing: any, field: string): boolean {
+  private hasValue(listing: MarketplaceListing, field: string): boolean {
     const value = this.getValue(listing, field);
     if (value === null || value === undefined) return false;
     if (typeof value === 'string' && value.trim() === '') return false;
@@ -194,12 +194,12 @@ export class ExtractionValidator {
   /**
    * Get field value from listing (supports nested paths)
    */
-  private getValue(listing: any, field: string): any {
+  private getValue(listing: MarketplaceListing, field: string): unknown {
     const parts = field.split('.');
-    let value = listing;
+    let value: unknown = listing;
     for (const part of parts) {
       if (value === null || value === undefined) return null;
-      value = value[part];
+      value = (value as Record<string, unknown>)[part];
     }
     return value;
   }
@@ -304,7 +304,7 @@ export const MARKETPLACE_VALIDATION_RULES: Record<MarketplaceType, ValidationRul
     minConfidence: 0.7,
     fieldValidators: {
       title: (value) => {
-        if (value && value.toLowerCase() === 'unknown item') {
+        if (typeof value === 'string' && value.toLowerCase() === 'unknown item') {
           return {
             severity: 'error',
             field: 'title',
@@ -325,7 +325,7 @@ export const MARKETPLACE_VALIDATION_RULES: Record<MarketplaceType, ValidationRul
     minConfidence: 0.75,
     fieldValidators: {
       title: (value) => {
-        if (value && value.toLowerCase().includes('unknown')) {
+        if (typeof value === 'string' && value.toLowerCase().includes('unknown')) {
           return {
             severity: 'error',
             field: 'title',

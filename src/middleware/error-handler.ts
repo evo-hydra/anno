@@ -32,7 +32,8 @@ export enum ErrorCode {
   INTERNAL_ERROR = 'internal_error',
   SERVICE_UNAVAILABLE = 'service_unavailable',
   TIMEOUT = 'timeout',
-  DEPENDENCY_ERROR = 'dependency_error'
+  DEPENDENCY_ERROR = 'dependency_error',
+  SSRF_BLOCKED = 'ssrf_blocked'
 }
 
 /**

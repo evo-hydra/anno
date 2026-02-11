@@ -16,6 +16,9 @@
 
 import { logger, startSpan } from '../utils/logger';
 import { config } from '../config/env';
+import { validateUrl } from './url-validator';
+import { withRetry } from '../utils/retry';
+import { AppError, ErrorCode } from '../middleware/error-handler';
 
 export interface HttpClientOptions {
   url: string;
@@ -63,6 +66,9 @@ export class HttpClient {
     } = options;
 
     try {
+      // SSRF protection: validate URL before making request
+      await validateUrl(url);
+
       logger.debug('HTTP request starting', { url, method });
 
       // Build headers
@@ -71,17 +77,53 @@ export class HttpClient {
         ...headers
       };
 
-      // Make request with timeout
-      const response = await fetch(url, {
-        method,
-        headers: requestHeaders,
-        body,
-        signal: AbortSignal.timeout(timeout),
-        // Note: fetch() in Node 18+ automatically uses HTTP/2 when available
-      });
+      // Make request with timeout, wrapped in retry for transient failures
+      const { response, responseBody } = await withRetry(
+        async () => {
+          const res = await fetch(url, {
+            method,
+            headers: requestHeaders,
+            body,
+            signal: AbortSignal.timeout(timeout),
+            // Note: fetch() in Node 18+ automatically uses HTTP/2 when available
+          });
 
-      // Read response body (empty for 304)
-      const responseBody = response.status === 304 ? '' : await response.text();
+          // Read response body (empty for 304)
+          const resBody = res.status === 304 ? '' : await res.text();
+
+          // Throw on 5xx to trigger retry
+          if (res.status >= 500) {
+            const err = new Error(`HTTP ${res.status}: ${res.statusText}`);
+            (err as Error & { status: number }).status = res.status;
+            throw err;
+          }
+
+          return { response: res, responseBody: resBody };
+        },
+        {
+          maxRetries: 3,
+          baseDelayMs: 200,
+          maxDelayMs: 5000,
+          retryOn: (error: unknown) => {
+            // Don't retry SSRF errors
+            if (error instanceof AppError && error.code === ErrorCode.SSRF_BLOCKED) {
+              return false;
+            }
+            // Don't retry abort/timeout
+            if (error instanceof Error && (error.name === 'AbortError' || error.name === 'TimeoutError')) {
+              return false;
+            }
+            // Don't retry 4xx errors
+            if (error instanceof Error && 'status' in error) {
+              const status = (error as Error & { status: number }).status;
+              if (status >= 400 && status < 500) return false;
+            }
+            // Retry 5xx and network errors
+            return true;
+          },
+        }
+      );
+
       const durationMs = Date.now() - startTime;
 
       // Extract protocol from response (Node fetch doesn't expose this directly)
