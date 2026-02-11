@@ -111,6 +111,38 @@ npm run build    # Compile TypeScript
 npm test         # Lint + build + run tests
 ```
 
+## MCP Integration
+
+Anno exposes itself as an [MCP](https://modelcontextprotocol.io/) server so AI assistants like Claude Code can use it as a native tool.
+
+### Setup with Claude Code
+
+1. Start the Anno server: `npm start`
+2. Add to your `.mcp.json` (project or global):
+
+```json
+{
+  "mcpServers": {
+    "anno": {
+      "command": "npx",
+      "args": ["anno-mcp"],
+      "env": {
+        "ANNO_BASE_URL": "http://localhost:5213"
+      }
+    }
+  }
+}
+```
+
+### MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `anno_fetch` | Fetch and extract content from a single URL |
+| `anno_batch_fetch` | Parallel extraction from multiple URLs |
+| `anno_crawl` | Crawl a website with configurable depth/page limits |
+| `anno_health` | Check Anno server status |
+
 ## Architecture
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design.
