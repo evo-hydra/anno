@@ -139,7 +139,7 @@ program
     console.log(chalk.bold(`Showing ${events.length} events:\n`));
 
     events.forEach((event, i) => {
-      const typeColor: Record<string, chalk.Chalk> = {
+      const typeColor: Record<string, typeof chalk.blue> = {
         extraction_started: chalk.blue,
         extraction_completed: chalk.green,
         extraction_failed: chalk.red,
