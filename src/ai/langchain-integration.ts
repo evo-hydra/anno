@@ -50,7 +50,7 @@ class LangChainEmbeddingProvider implements EmbeddingProvider {
               return new module.OpenAIEmbeddings({ apiKey, model: this.model });
             }
             case 'ollama': {
-              const module = await import('@langchain/community/embeddings/ollama');
+              const module = await import('@langchain/ollama');
               return new module.OllamaEmbeddings({
                 model: this.model,
                 baseUrl: process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434'
@@ -109,7 +109,7 @@ class LangChainLLMSummarizer implements Summarizer {
               return new module.ChatOpenAI({ apiKey, model: this.model, temperature: 0.2 });
             }
             case 'ollama': {
-              const module = await import('@langchain/community/chat_models/ollama');
+              const module = await import('@langchain/ollama');
               return new module.ChatOllama({
                 baseUrl: process.env.OLLAMA_BASE_URL || 'http://127.0.0.1:11434',
                 model: this.model,
