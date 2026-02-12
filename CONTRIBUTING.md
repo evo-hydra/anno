@@ -1,86 +1,114 @@
 # Contributing to Anno
 
-Thanks for helping build Anno! This doc focuses on the workflow that matches the current code base (Node.js TypeScript service + deterministic semantic stack).
+Thanks for helping build Anno! This guide covers the workflow for contributing to the project.
 
 ---
 
 ## Getting Started
+
 1. **Fork and clone**
    ```bash
    git clone https://github.com/your-username/anno.git
    cd anno
-   git remote add upstream https://github.com/original-org/anno.git
+   git remote add upstream https://github.com/evo-nirvana/anno.git
    ```
+
 2. **Install dependencies**
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
-3. **Environment variables** – copy `.env.local.example` (or create `.env.local`) and set:
+   > The `--legacy-peer-deps` flag is required due to LangChain peer dependency conflicts.
+
+3. **Environment variables** — copy `.env.local.example` (or create `.env.local`) and set:
    ```
    PORT=5213
-   AI_EMBEDDING_PROVIDER=deterministic
-   AI_VECTOR_STORE=memory
-   AI_SUMMARIZER=heuristic
-   AI_DEFAULT_K=3
    RENDERING_ENABLED=true
    RENDER_STEALTH=true
    ```
-   > Toggle these values once LangChain providers are installed; see `docs/guides/LANGCHAIN_INTEGRATION.md`.
 
 ---
 
 ## Development Workflow
+
 - **Start the service**
   ```bash
   npm run dev          # local hot reload
   # or
   docker compose up --build
   ```
+
 - **Run lint & tests** before pushing:
   ```bash
-  npm run lint
-  npm run test:unit
+  npm test             # runs ESLint + Vitest (all tests)
+  npx vitest run       # tests only (no lint)
   ```
-  Unit tests cover content distillation, semantic search, RAG pipeline, memory store, and summarizer.
 
-- **Formatting** – we rely on ESLint + TypeScript strict mode. Avoid large diffs unrelated to your change.
+- **Formatting** — we use ESLint flat config (`eslint.config.mjs`) with TypeScript strict mode. Avoid large diffs unrelated to your change.
 
 ---
 
-## Project Layout Snapshot
+## Project Layout
+
 ```
 src/
- ├── api/routes/         # REST endpoints (/v1/content, /v1/semantic, /v1/memory)
+ ├── api/routes/         # REST endpoints (/v1/content)
  ├── ai/                 # Embeddings, vector store, summarizer, RAG pipeline
- ├── core/               # Fetchers, distillation, rate limiting
- ├── services/           # Semantic service factory, cache, renderer
- └── utils/              # Logging, metrics
-examples/                # Runnable demos (news, FlipIQ, batch RAG)
-docs/                    # Guides, API reference, architecture notes
-project-management/      # Sprint plans & status docs
+ ├── cli/                # Commander CLI interface
+ ├── config/             # Environment config (env.ts), domain config
+ ├── core/               # Extraction ensemble, confidence scoring, pipeline
+ ├── mcp/                # Model Context Protocol server
+ ├── middleware/          # Auth, rate limiting, error handling
+ ├── policies/           # Domain-aware distillation policy presets (YAML)
+ ├── services/           # Fetcher, distiller, renderer, cache, crawler
+ ├── types/              # Shared TypeScript interfaces
+ └── utils/              # Logging, metrics, URL validation
 ```
 
 ---
 
 ## Making Changes
-1. **Create a branch** – `git checkout -b feature/semantic-redis`
-2. **Write code + tests** – keep functions small and deterministic.
-3. **Update docs** – if API contracts or env vars change, update the relevant guide in `docs/`.
-4. **Commit** – follow conventional commit style if possible (`feat: ...`, `fix: ...`).
-5. **Pull Request** – explain the change, link to docs/tests, call out any follow-up work.
+
+1. **Create a branch** — `git checkout -b feature/your-feature`
+2. **Write code + tests** — keep functions small and deterministic.
+3. **Update docs** — if API contracts or env vars change, update the relevant docs.
+4. **Commit** — follow conventional commit style (`feat: ...`, `fix: ...`, `test: ...`).
+5. **Pull Request** — explain the change, link to docs/tests, call out any follow-up work.
+
+---
+
+## Developer Certificate of Origin (DCO)
+
+All contributions must include a DCO sign-off. This certifies that you have the right to submit the work under the project's MIT license.
+
+Add the `-s` flag when committing:
+
+```bash
+git commit -s -m "feat: add new extraction method"
+```
+
+This appends a `Signed-off-by` line to your commit message:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+By signing off, you agree to the [DCO](https://developercertificate.org/):
+
+> I certify that this contribution is made under the terms of the MIT License
+> and that I have the right to submit it under those terms.
 
 ---
 
 ## Security Notes
-- Do not commit real API keys or proxy credentials. Use `.env.local` and your secret manager.
-- If you expose Anno beyond localhost, put it behind an authenticated proxy (API key or mTLS) and enable rate limiting.
-- Respect `robots.txt` and eBay’s terms unless you have written clearance.
+
+- Do not commit real API keys or credentials. Use `.env.local` and your secret manager.
+- If you expose Anno beyond localhost, put it behind an authenticated proxy and enable rate limiting.
+- Respect `robots.txt` and site terms of service.
 
 ---
 
-## Need Help?
-- Sprint roadmap: `project-management/sprints/SPRINT_03_PLAN.md`
-- Current status: `project-management/sprints/SPRINT_03_STATUS.md`
-- Health overview: `docs/wiki/PROJECT_HEALTH.md`
+## License
+
+This project is licensed under the [MIT License](LICENSE).
 
 Happy hacking!
