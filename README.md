@@ -1,22 +1,34 @@
 # Anno
 
-AI-native web content extractor with semantic understanding. Built for AI agents and LLMs.
+**Web content extraction for AI agents. 93% fewer tokens than raw HTML.**
 
-Anno fetches web pages, extracts meaningful content, and returns clean structured data — reducing token usage by 80%+ compared to raw HTML.
+Anno fetches web pages, strips the noise, and returns clean structured text — so your AI agent spends tokens on content, not markup.
+
+## Benchmark (N=20)
+
+Tested across news sites, documentation, Wikipedia, Stack Overflow, blogs, and data-heavy pages:
+
+| Page Type | Example | Raw HTML | Anno | Reduction |
+|-----------|---------|----------|------|-----------|
+| News | bbc.com/news | 86,399 tok | 806 tok | 99.1% |
+| Docs | developer.mozilla.org | 54,682 tok | 1,925 tok | 96.5% |
+| Wiki | en.wikipedia.org/wiki/AI | 303,453 tok | 2,806 tok | 99.1% |
+| Forum | stackoverflow.com | 287,846 tok | 1,661 tok | 99.4% |
+| Blog | martinfowler.com | 21,510 tok | 2,647 tok | 87.7% |
+| Tables | wikipedia.org (browser comparison) | 291,843 tok | 792 tok | 99.7% |
+| Minimal | sqlite.org | 5,306 tok | 2,890 tok | 45.5% |
+
+**Average: 92.7% reduction. Overall: 98.2% (1.56M → 28.5K tokens across 20 pages)**
+
+Reproduce it yourself: `npx tsx bench/run.ts`
 
 ## Quick Start
 
 ```bash
-npm install
+npm install --legacy-peer-deps
 npm run build
 npm start
-# Server starts on http://localhost:5213
-```
-
-### Health check
-
-```bash
-curl http://localhost:5213/health
+# Server running at http://localhost:5213
 ```
 
 ### Fetch a page
@@ -24,108 +36,53 @@ curl http://localhost:5213/health
 ```bash
 curl -X POST http://localhost:5213/v1/content/fetch \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}'
+  -d '{"url": "https://en.wikipedia.org/wiki/TypeScript"}'
 ```
 
-### Fetch with browser rendering
+### Fetch with JavaScript rendering
+
+For SPAs and dynamic sites, enable Playwright:
 
 ```bash
 curl -X POST http://localhost:5213/v1/content/fetch \
   -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "render": true}'
+  -d '{"url": "https://example.com", "options": {"render": true}}'
 ```
 
-## CLI
+### Batch fetch
 
 ```bash
-# Start server
-npx anno start --port 5213
-
-# Check health
-npx anno health
-
-# Fetch a URL
-npx anno fetch https://example.com
-
-# Crawl a site
-npx anno crawl https://example.com --depth 2 --max-pages 10
+curl -X POST http://localhost:5213/v1/content/batch-fetch \
+  -H "Content-Type: application/json" \
+  -d '{"urls": ["https://example.com", "https://news.ycombinator.com"]}'
 ```
 
-## Docker
+## How It Works
 
-```bash
-docker build -t anno .
-docker run -p 5213:5213 anno
+```
+URL → Fetch → Ensemble Extraction → Confidence Scoring → Structured Output
+              ├─ Readability
+              ├─ Ollama LLM (optional)
+              └─ DOM heuristic
 ```
 
-Or with docker-compose:
+Anno runs multiple extraction methods in parallel, scores each result for quality, and returns the best one. This ensemble approach handles everything from clean blog posts to messy e-commerce pages.
 
-```bash
-docker compose up
-```
+## MCP Integration (Claude Code, Cursor, etc.)
 
-## Configuration
+Anno exposes itself as an [MCP](https://modelcontextprotocol.io/) server. Any AI tool that supports MCP can use Anno natively.
 
-Copy `.env.example` to `.env.local` and modify as needed. Key settings:
+### Setup
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PORT` | `5213` | Server port |
-| `RENDERING_ENABLED` | `true` | Enable Playwright browser rendering |
-| `REDIS_ENABLED` | `false` | Enable Redis caching (auto in production) |
-| `AI_LLM_PROVIDER` | `none` | LLM provider for AI-assisted extraction |
-| `RESPECT_ROBOTS` | `true` | Respect robots.txt |
-| `RENDER_STEALTH` | `true` | Use stealth mode for browser rendering |
-
-See `.env.example` for the full list.
-
-## Optional: Python trafilatura
-
-Anno can use Python's [trafilatura](https://github.com/adbar/trafilatura) library for enhanced text extraction. This is optional — Anno gracefully falls back to its built-in extractors when Python isn't available.
-
-```bash
-pip install trafilatura
-```
-
-## API Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Server health check |
-| `GET` | `/metrics` | Prometheus-compatible metrics |
-| `POST` | `/v1/content/fetch` | Fetch and extract content from URL |
-| `POST` | `/v1/content/batch-fetch` | Batch fetch multiple URLs |
-| `POST` | `/v1/crawl` | Crawl a website |
-| `POST` | `/v1/interact` | Browser interaction (click, type, etc.) |
-| `POST` | `/v1/workflow` | Multi-step browser workflows |
-| `POST` | `/v1/semantic/index` | Index content for semantic search |
-| `POST` | `/v1/semantic/search` | Semantic search over indexed content |
-| `POST` | `/v1/semantic/rag` | RAG query over indexed content |
-
-## Development
-
-```bash
-npm run dev      # Start with hot-reload
-npm run lint     # Run ESLint
-npm run build    # Compile TypeScript
-npm test         # Lint + build + run tests
-```
-
-## MCP Integration
-
-Anno exposes itself as an [MCP](https://modelcontextprotocol.io/) server so AI assistants like Claude Code can use it as a native tool.
-
-### Setup with Claude Code
-
-1. Start the Anno server: `npm start`
-2. Add to your `.mcp.json` (project or global):
+1. Start Anno: `npm start`
+2. Add to `~/.claude/.mcp.json` (global) or `.mcp.json` (per-project):
 
 ```json
 {
   "mcpServers": {
     "anno": {
-      "command": "npx",
-      "args": ["anno-mcp"],
+      "command": "node",
+      "args": ["/path/to/anno/dist/mcp/server.js"],
       "env": {
         "ANNO_BASE_URL": "http://localhost:5213"
       }
@@ -138,15 +95,69 @@ Anno exposes itself as an [MCP](https://modelcontextprotocol.io/) server so AI a
 
 | Tool | Description |
 |------|-------------|
-| `anno_fetch` | Fetch and extract content from a single URL |
-| `anno_batch_fetch` | Parallel extraction from multiple URLs |
-| `anno_crawl` | Crawl a website with configurable depth/page limits |
-| `anno_health` | Check Anno server status |
+| `anno_fetch` | Extract content from a single URL |
+| `anno_batch_fetch` | Parallel extraction from multiple URLs (up to 10) |
+| `anno_crawl` | Crawl a website with depth/page limits |
+| `anno_health` | Check server status |
+
+## CLI
+
+```bash
+npx anno start --port 5213
+npx anno fetch https://example.com
+npx anno crawl https://example.com --depth 2 --max-pages 10
+npx anno health
+```
+
+## Docker
+
+```bash
+docker build -t anno .
+docker run -p 5213:5213 anno
+```
+
+## API
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/content/fetch` | Extract content from a URL |
+| `POST` | `/v1/content/batch-fetch` | Batch extract from multiple URLs |
+| `POST` | `/v1/crawl` | Start a crawl job |
+| `GET` | `/v1/crawl/:id` | Check crawl job status |
+| `GET` | `/v1/crawl/:id/results` | Get crawl results |
+| `GET` | `/health` | Server health check |
+| `GET` | `/metrics` | Prometheus metrics |
+
+## Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PORT` | `5213` | Server port |
+| `RENDERING_ENABLED` | `true` | Playwright browser rendering |
+| `REDIS_ENABLED` | `false` | Redis caching (LRU fallback when off) |
+| `AI_LLM_PROVIDER` | `none` | LLM provider for AI-assisted extraction |
+| `RESPECT_ROBOTS` | `true` | Respect robots.txt |
+| `RENDER_STEALTH` | `true` | Stealth mode for browser rendering |
+
+## When NOT to Use Anno
+
+- **Static text files** — If the source is already clean text or JSON, Anno adds overhead for no gain (see SQLite at 45.5% — already minimal HTML)
+- **Authenticated pages** — Anno doesn't handle login flows (yet). Use a session cookie or authenticated proxy
+- **Real-time streaming** — Anno extracts on-demand, not as a live stream
+
+## Development
+
+```bash
+npm run dev      # Hot-reload
+npm run lint     # ESLint
+npm run build    # Compile TypeScript
+npm test         # Lint + Vitest (1,958 tests)
+```
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for system design.
 
 ## License
 
-MIT
+[MIT](LICENSE) — Evolving Intelligence AI
