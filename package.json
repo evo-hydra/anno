@@ -15,9 +15,9 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "lint": "eslint \"src/**/*.ts\"",
     "start": "node dist/server.js",
-    "test": "npm run lint && npx vitest run",
-    "test:unit": "npx vitest run",
-    "test:ci": "npx vitest run",
+    "test": "npm run lint && vitest run",
+    "test:unit": "vitest run",
+    "test:ci": "vitest run --coverage",
     "benchmark": "tsx benchmarks/comprehensive-demo.ts",
     "benchmark:simple": "tsx benchmarks/simple-comparison.ts",
     "benchmark:working": "tsx benchmarks/working-demo.ts",
@@ -81,9 +81,11 @@
     "@types/node": "^24.5.2",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
+    "@vitest/coverage-v8": "^4.0.18",
     "axios": "^1.13.5",
     "eslint": "^9.36.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "vitest": "^4.0.18"
   }
 }

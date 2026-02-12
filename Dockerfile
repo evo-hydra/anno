@@ -51,6 +51,7 @@ RUN apk add --no-cache \
 # Tell Playwright to use the system chromium
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 ENV PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/usr/bin/chromium-browser
+ENV NODE_ENV=production
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && \

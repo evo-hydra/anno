@@ -193,6 +193,11 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 const server = app.listen(config.port, async () => {
+  // Server-side request timeouts to prevent clients holding connections indefinitely
+  server.setTimeout(120_000);       // 2 min max request lifetime
+  server.keepAliveTimeout = 65_000; // Slightly above typical LB timeout (60s)
+  server.headersTimeout = 70_000;   // Must be > keepAliveTimeout
+
   logger.info('Anno MVP service listening', { port: config.port });
 
   if (config.rendering.enabled) {
@@ -256,14 +261,46 @@ process.on('uncaughtException', (error: Error) => {
 
 const shutdown = async () => {
   logger.info('shutting down service');
+
+  // Force exit after 30s to prevent hanging on stuck connections
+  const forceExitTimer = setTimeout(() => {
+    logger.error('graceful shutdown timed out after 30s, forcing exit');
+    process.exit(1);
+  }, 30_000);
+  forceExitTimer.unref();
+
+  try {
+    // Stop accepting new connections and drain existing ones
+    await new Promise<void>((resolve, reject) => {
+      server.close((err) => (err ? reject(err) : resolve()));
+    });
+    logger.info('HTTP server closed, connections drained');
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error);
+    logger.error('HTTP server close failed', { error: msg });
+  }
+
   watchManager.shutdown();
+
   await getJobQueue().stop().catch((error: Error) => {
     logger.error('job queue shutdown failed', { error: error.message });
   });
-  server.close();
+
   await shutdownRenderer().catch((error: Error) => {
     logger.error('renderer shutdown failed', { error: error.message });
   });
+
+  // Close cache/Redis connections
+  try {
+    const { cache } = await import('./services/cache');
+    if (typeof cache.shutdown === 'function') {
+      await cache.shutdown();
+      logger.info('cache shutdown complete');
+    }
+  } catch {
+    // Cache may not have a shutdown method — that's fine
+  }
+
   process.exit(0);
 };
 

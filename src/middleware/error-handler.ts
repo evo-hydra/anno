@@ -85,7 +85,12 @@ function formatErrorResponse(
 
   // Handle generic errors
   const statusCode = 'statusCode' in error ? (error.statusCode as number) : 500;
-  const message = error.message || 'An unexpected error occurred';
+
+  // In production, sanitize 5xx error messages to avoid leaking internal details
+  const isProduction = process.env.NODE_ENV === 'production';
+  const message = (isProduction && statusCode >= 500)
+    ? 'An unexpected error occurred'
+    : (error.message || 'An unexpected error occurred');
 
   return {
     error: ErrorCode.INTERNAL_ERROR,
