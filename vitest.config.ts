@@ -11,9 +11,9 @@ export default defineConfig({
         'src/**/*.d.ts',
       ],
       thresholds: {
-        lines: 65,
-        branches: 52,
-        functions: 67,
+        lines: 74,
+        branches: 60,
+        functions: 75,
       },
       reporter: ['text', 'lcov'],
     },
