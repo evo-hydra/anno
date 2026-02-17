@@ -2,7 +2,7 @@
 
 ## Overview
 
-Anno is an AI-native web content extractor. It fetches web pages, distills meaningful content through a multi-extractor ensemble, and returns clean structured data via NDJSON streams. Built for AI agents and LLMs, it reduces token usage 80%+ compared to raw HTML.
+Anno is a web content extraction service for AI agents. It fetches web pages, runs an ensemble of extraction methods with confidence scoring, and returns clean structured text via NDJSON streams — reducing token usage 93% vs raw HTML. Available via HTTP API, CLI, and MCP.
 
 ## System Diagram
 
