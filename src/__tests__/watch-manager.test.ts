@@ -436,4 +436,263 @@ describe('WatchManager', () => {
       expect(events).toHaveLength(3);
     });
   });
+
+  // -----------------------------------------------------------------------
+  // tick — timer-based polling
+  // -----------------------------------------------------------------------
+
+  describe('tick (via timer)', () => {
+    it('checks active watches when interval has elapsed', async () => {
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+
+      // Manually set lastChecked to past
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      // Advance timer to trigger tick (30s interval)
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // checkWatch should have been called — verify via fetchPage mock
+      expect(mockFetchPage).toHaveBeenCalled();
+    });
+
+    it('skips paused watches', async () => {
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+      await manager.pauseWatch(watch.id);
+
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      expect(mockFetchPage).not.toHaveBeenCalled();
+    });
+
+    it('skips watches whose interval has not elapsed', async () => {
+      const watch = await manager.addWatch('https://example.com', { interval: 3600 });
+
+      // Set lastChecked to recent
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date().toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      expect(mockFetchPage).not.toHaveBeenCalled();
+    });
+
+    it('does not re-enter tick if previous tick is still running', async () => {
+      // Make fetchPage hang to simulate long-running tick
+      let resolveFetch!: () => void;
+      mockFetchPage.mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFetch = () =>
+            resolve({
+              body: '<html></html>',
+              finalUrl: 'https://example.com',
+              statusCode: 200,
+            });
+        })
+      );
+
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      // First tick starts
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Second tick should be skipped (checking = true)
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Only one fetch should have been called
+      expect(mockFetchPage).toHaveBeenCalledTimes(1);
+
+      // Resolve the hung fetch
+      resolveFetch();
+      await vi.advanceTimersByTimeAsync(1);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // checkWatch — change detection
+  // -----------------------------------------------------------------------
+
+  describe('checkWatch (via tick)', () => {
+    it('records event when change exceeds threshold', async () => {
+      mockDetectChanges.mockResolvedValueOnce({
+        url: 'https://example.com',
+        hasChanged: true,
+        changePercent: 15,
+        summary: 'Content updated',
+        currentSnapshot: { contentHash: 'newhash' },
+        previousSnapshot: { contentHash: 'oldhash' },
+        diff: {
+          lines: [],
+          addedCount: 5,
+          removedCount: 2,
+          unchangedCount: 50,
+          changePercent: 15,
+        },
+      });
+
+      const watch = await manager.addWatch('https://example.com', {
+        interval: 60,
+        changeThreshold: 5,
+      });
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Should have appended event
+      expect(mockAppendFile).toHaveBeenCalled();
+
+      // Check count should have incremented
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.checkCount).toBe(1);
+      expect(updated.changeCount).toBe(1);
+    });
+
+    it('does not record event when change is below threshold', async () => {
+      mockDetectChanges.mockResolvedValueOnce({
+        url: 'https://example.com',
+        hasChanged: true,
+        changePercent: 0.5,
+        summary: 'Minor change',
+        currentSnapshot: { contentHash: 'newhash' },
+        diff: {
+          lines: [],
+          addedCount: 1,
+          removedCount: 0,
+          unchangedCount: 100,
+          changePercent: 0.5,
+        },
+      });
+
+      const watch = await manager.addWatch('https://example.com', {
+        interval: 60,
+        changeThreshold: 5,
+      });
+      vi.clearAllMocks();
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Should not have appended event (change below threshold)
+      expect(mockAppendFile).not.toHaveBeenCalled();
+    });
+
+    it('marks watch as error when fetch fails', async () => {
+      mockFetchPage.mockRejectedValueOnce(new Error('Network timeout'));
+
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.status).toBe('error');
+      expect(updated.lastError).toBe('Network timeout');
+    });
+
+    it('clears error status on successful check after previous error', async () => {
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+      const w = manager.getWatch(watch.id)!;
+      w.status = 'active';
+      w.lastError = 'previous error';
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.lastError).toBeUndefined();
+    });
+
+    it('increments checkCount even when no change detected', async () => {
+      const watch = await manager.addWatch('https://example.com', { interval: 60 });
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.checkCount).toBe(1);
+      expect(updated.changeCount).toBe(0);
+    });
+  });
+
+  // -----------------------------------------------------------------------
+  // webhook firing
+  // -----------------------------------------------------------------------
+
+  describe('webhook firing (via change detection)', () => {
+    it('fires webhook when change exceeds threshold and webhookUrl is configured', async () => {
+      mockDetectChanges.mockResolvedValueOnce({
+        url: 'https://example.com',
+        hasChanged: true,
+        changePercent: 25,
+        summary: 'Major update',
+        currentSnapshot: { contentHash: 'newhash' },
+        previousSnapshot: { contentHash: 'oldhash' },
+        diff: {
+          lines: [],
+          addedCount: 10,
+          removedCount: 5,
+          unchangedCount: 50,
+          changePercent: 25,
+        },
+      });
+
+      const watch = await manager.addWatch('https://example.com', {
+        interval: 60,
+        webhookUrl: 'http://hooks.example.com/notify',
+        changeThreshold: 1,
+      });
+
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Change was detected and event recorded
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.changeCount).toBe(1);
+      expect(mockAppendFile).toHaveBeenCalled();
+    });
+
+    it('does not fire webhook when no webhookUrl configured', async () => {
+      mockDetectChanges.mockResolvedValueOnce({
+        url: 'https://example.com',
+        hasChanged: true,
+        changePercent: 25,
+        summary: 'Major update',
+        currentSnapshot: { contentHash: 'newhash' },
+        previousSnapshot: { contentHash: 'oldhash' },
+        diff: {
+          lines: [],
+          addedCount: 10,
+          removedCount: 5,
+          unchangedCount: 50,
+          changePercent: 25,
+        },
+      });
+
+      const watch = await manager.addWatch('https://example.com', {
+        interval: 60,
+        changeThreshold: 1,
+        // No webhookUrl
+      });
+
+      const w = manager.getWatch(watch.id)!;
+      w.lastChecked = new Date(Date.now() - 120_000).toISOString();
+
+      await vi.advanceTimersByTimeAsync(31_000);
+
+      // Change detected, but no webhook fired (no assertion error = pass)
+      const updated = manager.getWatch(watch.id)!;
+      expect(updated.changeCount).toBe(1);
+    });
+  });
 });

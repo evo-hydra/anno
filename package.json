@@ -29,6 +29,7 @@
     "validate:accuracy": "tsx benchmarks/extraction-accuracy.ts",
     "validate:traditional": "tsx benchmarks/anno-vs-traditional.ts",
     "bench:llm-latency": "tsx benchmarks/llm-latency.ts",
+    "bench:perf": "tsx benchmarks/perf-baseline.ts",
     "license:check": "license-checker --summary --production"
   },
   "keywords": [
@@ -46,7 +47,8 @@
   "files": [
     "dist/",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md"
   ],
   "repository": {
     "type": "git",
@@ -94,6 +96,7 @@
     "license-checker": "^25.0.1",
     "supertest": "^7.2.2",
     "ts-node-dev": "^2.0.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.2",
     "vitest": "^4.0.18"
   }

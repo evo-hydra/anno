@@ -10,24 +10,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Route integration tests for all 8 API endpoints (content, crawl, interact, jobs, memory, semantic, watch, workflow)
 - `anno setup claude-code` CLI command for MCP server configuration
-- Supertest-based integration smoke tests for health, metrics, CORS, security headers, and 404 handling
+- E2E smoke tests via supertest covering health, content fetch, jobs, 404, security headers, metrics, request tracing, watch, and crawl APIs
 - License audit via `license-checker` (`npm run license:check`)
-- Tests for request-context middleware, ebay-url-builder, and provenance-verify utilities
+- Performance baseline benchmark (`npm run bench:perf`) — measures p50/p95/mean latency for health and content fetch endpoints
+- OpenAPI v1.0.0 specification with all 28 endpoints, 24 schemas, and reusable components
+- `.npmignore` for clean npm publish (214 KB tarball)
 
 ### Changed
 - All 19 outdated dependencies upgraded to latest (lru-cache 10→11, commander 13→14, jsdom 22→28, eslint 9→10, @langchain/openai 0.6→1.2, @anthropic-ai/sdk 0.65→0.75, and more)
 - Extracted Express app factory (`src/app.ts`) from `src/server.ts` for testability
 - ESLint ignores now include `coverage/` directory
 - Bumped `@types/node` from v24 to v25
-- Raised branch coverage CI threshold from 60% to 65%
+- Raised branch coverage CI threshold from 60% to 65%, then to 70%
+- OpenAPI spec updated: version 0.2.0 → 1.0.0, license Proprietary → MIT, removed placeholder servers
+- Deleted duplicate `docs/openapi.yaml`
 
 ### Fixed
 - Express 5 `req.params` type narrowing in crawl, jobs, and watch routes (use `String()` wrapper)
 
 ### Testing
-- 2,290 tests across 86 test files (up from 1,958 across 72)
-- 81.42% line coverage, 69.79% branch coverage, 82.4% function coverage
-- Extended test coverage for pipeline, crawler, fetcher, distiller core services
+- 2,682 tests across 95 test files (up from 1,958 across 72)
+- 85.18% line coverage, 75.04% branch coverage, 86.55% function coverage
+- Extended branch coverage for app.ts (27→95%), distiller (56→76%), summarizer (37→100%), metrics (50→85%), crawl routes (40→75%), content routes (58→80%), rate-limiter (17→75%), retry (62→90%), job-queue (51→80%)
+- New test files: ebay-adapter-original (55 tests), demo-script (13 tests), renderer branches (7 tests), watch-manager branches (13 tests)
 
 ## [1.0.0] - 2025-10-20
 

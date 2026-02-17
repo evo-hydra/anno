@@ -1,53 +1,61 @@
 openapi: 3.1.0
 info:
   title: Anno API
-  version: 0.2.0
+  version: 1.0.0
   description: |
-    Anno - AI-Native Web Browser API
+    Anno — AI-Native Web Content Extractor
 
-    Anno transforms web content into semantic, machine-readable streams optimized for AI agents.
-    Achieves 82.3% token reduction while preserving 92.5% quality (F1 score).
+    Transforms web content into semantic, machine-readable streams optimized for AI agents.
+    Achieves 80%+ token reduction while preserving content quality.
 
-    ## Features
-    - **NDJSON Streaming**: Efficient real-time content delivery
-    - **Provenance Tracking**: Full citation chains with SHA-256 hashing
-    - **Policy Engine**: Domain-specific extraction rules
-    - **Confidence Scoring**: Probabilistic quality assessment
-    - **Batch Processing**: Parallel content fetching
-
+    ## Capabilities
+    - **NDJSON Streaming** — Efficient real-time content delivery
+    - **Crawling** — Multi-page site crawling with BFS/DFS strategies
+    - **Browser Interaction** — Programmatic browser actions via Playwright
+    - **Workflows** — Multi-step extraction pipelines
+    - **Semantic Search & RAG** — Vector search with retrieval-augmented generation
+    - **Watch** — Monitor pages for changes with webhooks
+    - **Session Memory** — Persistent conversation context
   contact:
     name: Anno Support
     email: support@anno.example.com
   license:
-    name: Proprietary
-    url: https://anno.example.com/license
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 
 servers:
   - url: http://localhost:5213
     description: Local development
-  - url: https://staging.anno.example.com
-    description: Staging environment
-  - url: https://api.anno.example.com
-    description: Production environment
 
 security:
   - ApiKeyAuth: []
 
 tags:
+  - name: Health
+    description: System health and metrics
   - name: Content
     description: Web content fetching and distillation
+  - name: Crawl
+    description: Multi-page site crawling
+  - name: Jobs
+    description: Async job management
+  - name: Watch
+    description: Page change monitoring
+  - name: Interact
+    description: Browser interaction and screenshots
+  - name: Workflow
+    description: Multi-step extraction workflows
   - name: Semantic
     description: Semantic search and RAG operations
   - name: Memory
     description: Session memory management
-  - name: Health
-    description: System health and metrics
 
 paths:
+  # ── Health ──────────────────────────────────────────────────────────
   /health:
     get:
       summary: Health check
-      description: Get system health status with detailed metrics
+      description: Get system health status with detailed component checks
       tags: [Health]
       security: []
       responses:
@@ -78,12 +86,13 @@ paths:
               schema:
                 type: string
 
+  # ── Content ─────────────────────────────────────────────────────────
   /v1/content/fetch:
     post:
       summary: Fetch and distill web content
       description: |
-        Fetch a URL and return distilled content as NDJSON stream.
-        Each line is a JSON event with metadata, nodes, confidence, or provenance.
+        Fetch a URL and return distilled content as an NDJSON stream.
+        Each line is a JSON event (metadata, node, confidence, provenance, done).
       tags: [Content]
       requestBody:
         required: true
@@ -91,76 +100,25 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/FetchRequest'
-            examples:
-              basic:
-                summary: Basic fetch
-                value:
-                  url: "https://example.com/article"
-              withOptions:
-                summary: Fetch with options
-                value:
-                  url: "https://example.com/article"
-                  options:
-                    useCache: true
-                    maxNodes: 60
-                    render: true
       responses:
         '200':
           description: NDJSON stream of content events
-          headers:
-            X-RateLimit-Limit:
-              schema:
-                type: integer
-              description: Request rate limit
-            X-RateLimit-Remaining:
-              schema:
-                type: integer
-              description: Remaining requests
-            X-RateLimit-Reset:
-              schema:
-                type: string
-                format: date-time
-              description: Rate limit reset time
           content:
             application/x-ndjson:
               schema:
                 type: string
                 description: Newline-delimited JSON events
-              examples:
-                stream:
-                  summary: Example NDJSON stream
-                  value: |
-                    {"type":"metadata","payload":{"url":"https://example.com","status":200}}
-                    {"type":"confidence","payload":{"overallConfidence":0.85}}
-                    {"type":"node","payload":{"tag":"h1","text":"Article Title"}}
-                    {"type":"node","payload":{"tag":"p","text":"Content paragraph..."}}
-                    {"type":"provenance","payload":{"contentHash":"abc123..."}}
-                    {"type":"done","payload":{"nodes":25}}
         '400':
-          description: Invalid request
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/BadRequest'
         '401':
-          description: Missing or invalid API key
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          $ref: '#/components/responses/Unauthorized'
         '429':
-          description: Rate limit exceeded
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RateLimitError'
+          $ref: '#/components/responses/RateLimited'
 
   /v1/content/batch-fetch:
     post:
       summary: Batch fetch multiple URLs
-      description: |
-        Fetch multiple URLs in parallel and return combined NDJSON stream.
-        Events are wrapped with source metadata for tracking.
+      description: Fetch multiple URLs in parallel and return combined NDJSON stream.
       tags: [Content]
       requestBody:
         required: true
@@ -175,12 +133,602 @@ paths:
             application/x-ndjson:
               schema:
                 type: string
-                description: Newline-delimited JSON batch events
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/RateLimited'
+
+  # ── Crawl ───────────────────────────────────────────────────────────
+  /v1/crawl:
+    post:
+      summary: Start a crawl job
+      description: Start crawling a website. Returns a job ID for tracking progress.
+      tags: [Crawl]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrawlRequest'
+      responses:
+        '202':
+          description: Crawl job started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlJobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/crawl/jobs:
+    get:
+      summary: List crawl jobs
+      tags: [Crawl]
+      responses:
+        '200':
+          description: List of crawl jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CrawlJobResponse'
+
+  /v1/crawl/{jobId}:
+    get:
+      summary: Get crawl job status
+      tags: [Crawl]
+      parameters:
+        - $ref: '#/components/parameters/CrawlJobId'
+      responses:
+        '200':
+          description: Crawl job status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrawlJobResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Cancel a running crawl
+      tags: [Crawl]
+      parameters:
+        - $ref: '#/components/parameters/CrawlJobId'
+      responses:
+        '200':
+          description: Crawl cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Crawl is not in a cancellable state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/crawl/{jobId}/results:
+    get:
+      summary: Get crawl results
+      description: Returns results for a completed crawl job.
+      tags: [Crawl]
+      parameters:
+        - $ref: '#/components/parameters/CrawlJobId'
+      responses:
+        '200':
+          description: Crawl results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Crawl is still running
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Jobs ────────────────────────────────────────────────────────────
+  /v1/jobs:
+    post:
+      summary: Submit a job
+      description: Submit an async job for background processing.
+      tags: [Jobs]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JobRequest'
+      responses:
+        '202':
+          description: Job accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: List jobs
+      description: List jobs with optional status and type filters.
+      tags: [Jobs]
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+          description: Filter by job status
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [fetch, crawl, extract, workflow, research]
+          description: Filter by job type
+      responses:
+        '200':
+          description: List of jobs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobs:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/JobResponse'
+
+  /v1/jobs/{jobId}:
+    get:
+      summary: Get job status
+      tags: [Jobs]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Cancel a job
+      tags: [Jobs]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: Job cancelled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: cancelled
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Job cannot be cancelled in its current state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /v1/jobs/{jobId}/stream:
+    get:
+      summary: Stream job progress
+      description: Server-Sent Events stream for real-time job progress updates.
+      tags: [Jobs]
+      parameters:
+        - $ref: '#/components/parameters/JobId'
+      responses:
+        '200':
+          description: SSE event stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                description: Server-Sent Events stream with job progress updates
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Watch ───────────────────────────────────────────────────────────
+  /v1/watch:
+    post:
+      summary: Create a watch
+      description: Monitor a URL for content changes at a specified interval.
+      tags: [Watch]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatchRequest'
+      responses:
+        '201':
+          description: Watch created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    get:
+      summary: List watches
+      tags: [Watch]
+      responses:
+        '200':
+          description: List of watches
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  watches:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WatchResponse'
+
+  /v1/watch/{watchId}:
+    get:
+      summary: Get watch status
+      description: Returns watch configuration and recent change events.
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+      responses:
+        '200':
+          description: Watch details with recent events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Remove a watch
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+      responses:
+        '200':
+          description: Watch removed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/watch/{watchId}/pause:
+    put:
+      summary: Pause a watch
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+      responses:
+        '200':
+          description: Watch paused
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: paused
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/watch/{watchId}/resume:
+    put:
+      summary: Resume a watch
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+      responses:
+        '200':
+          description: Watch resumed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: active
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/watch/{watchId}/events:
+    get:
+      summary: Get change events
+      description: List change events detected for this watch.
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 500
+            default: 50
+          description: Maximum number of events to return
+      responses:
+        '200':
+          description: Change events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WatchEvent'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/watch/{watchId}/history:
+    get:
+      summary: Get diff history
+      description: Get content diff history for this watch.
+      tags: [Watch]
+      parameters:
+        - $ref: '#/components/parameters/WatchId'
+      responses:
+        '200':
+          description: Diff history
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ── Interact ────────────────────────────────────────────────────────
+  /v1/interact:
+    post:
+      summary: Execute browser actions
+      description: |
+        Execute a sequence of browser actions on a page.
+        Supports clicking, filling forms, scrolling, screenshots, and more.
+      tags: [Interact]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InteractRequest'
+      responses:
+        '200':
+          description: Action results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InteractResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/interact/screenshot:
+    post:
+      summary: Take a screenshot
+      description: Capture a screenshot of the specified URL.
+      tags: [Interact]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                sessionId:
+                  type: string
+      responses:
+        '200':
+          description: Screenshot captured
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  screenshot:
+                    type: string
+                    description: Base64-encoded image data
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/interact/page-state:
+    post:
+      summary: Get page state
+      description: Retrieve the current DOM state and metadata of a page.
+      tags: [Interact]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url:
+                  type: string
+                  format: uri
+                sessionId:
+                  type: string
+      responses:
+        '200':
+          description: Page state
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ── Workflow ────────────────────────────────────────────────────────
+  /v1/workflow/execute:
+    post:
+      summary: Execute a workflow
+      description: Run a multi-step extraction workflow with variables and conditional logic.
+      tags: [Workflow]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecuteRequest'
+      responses:
+        '200':
+          description: Workflow execution results
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /v1/workflow/validate:
+    post:
+      summary: Validate a workflow
+      description: Check a workflow definition for errors without executing it.
+      tags: [Workflow]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowExecuteRequest'
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  errors:
+                    type: array
+                    items:
+                      type: string
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /v1/workflow/parse:
+    post:
+      summary: Parse YAML to workflow
+      description: Parse a YAML string into a validated workflow definition.
+      tags: [Workflow]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [yaml]
+              properties:
+                yaml:
+                  type: string
+                  description: YAML workflow definition
+      responses:
+        '200':
+          description: Parsed workflow
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ── Semantic ────────────────────────────────────────────────────────
+  /v1/semantic/index:
+    post:
+      summary: Index documents
+      description: Index documents into the semantic search vector store.
+      tags: [Semantic]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SemanticIndexRequest'
+      responses:
+        '202':
+          description: Documents indexed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: indexed
+                  count:
+                    type: integer
 
   /v1/semantic/search:
     post:
       summary: Semantic search
-      description: Search cached content using semantic similarity
+      description: Search indexed documents using semantic similarity.
       tags: [Semantic]
       requestBody:
         required: true
@@ -195,25 +743,90 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/SemanticSearchResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
 
-  /v1/memory/sessions:
+  /v1/semantic/rag:
     post:
-      summary: Create memory session
-      description: Create a new session for storing conversation context
-      tags: [Memory]
+      summary: RAG query
+      description: Perform retrieval-augmented generation — semantic search plus AI-generated answer.
+      tags: [Semantic]
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSessionRequest'
+              $ref: '#/components/schemas/RAGRequest'
       responses:
-        '201':
-          description: Session created
+        '200':
+          description: RAG response with answer and citations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RAGResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  # ── Memory ──────────────────────────────────────────────────────────
+  /v1/memory/{sessionId}:
+    get:
+      summary: Get session
+      description: Retrieve session data and entries.
+      tags: [Memory]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '200':
+          description: Session data
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SessionResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Clear session
+      description: Delete all entries for a session.
+      tags: [Memory]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      responses:
+        '204':
+          description: Session cleared
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /v1/memory/{sessionId}/entries:
+    post:
+      summary: Add session entry
+      description: Add a note, context, or summary entry to a session.
+      tags: [Memory]
+      parameters:
+        - $ref: '#/components/parameters/SessionId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MemoryEntryRequest'
+      responses:
+        '201':
+          description: Entry added
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+                    example: added
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -223,39 +836,97 @@ components:
       name: X-API-Key
       description: API key for authentication
 
+  parameters:
+    CrawlJobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Crawl job identifier
+
+    JobId:
+      name: jobId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Job identifier
+
+    WatchId:
+      name: watchId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Watch identifier
+
+    SessionId:
+      name: sessionId
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Memory session identifier
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Missing or invalid API key
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/RateLimitError'
+
   schemas:
+    # ── Content schemas ───────────────────────────────────────────────
     FetchRequest:
       type: object
-      required:
-        - url
+      required: [url]
       properties:
         url:
           type: string
           format: uri
           description: URL to fetch and distill
-          example: "https://example.com/article"
         options:
           type: object
           properties:
             useCache:
               type: boolean
               default: true
-              description: Whether to use cached content
             maxNodes:
               type: integer
               minimum: 1
               maximum: 100
               default: 60
-              description: Maximum nodes to extract
             render:
               type: boolean
               default: false
-              description: Use Playwright rendering for JavaScript-heavy sites
+              description: Use Playwright rendering for JS-heavy sites
 
     BatchFetchRequest:
       type: object
-      required:
-        - urls
+      required: [urls]
       properties:
         urls:
           type: array
@@ -264,7 +935,6 @@ components:
             format: uri
           minItems: 1
           maxItems: 10
-          description: URLs to fetch
         options:
           type: object
           properties:
@@ -286,33 +956,514 @@ components:
               default: 3
               description: Number of parallel requests
 
+    # ── Crawl schemas ─────────────────────────────────────────────────
+    CrawlRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: Starting URL to crawl
+        options:
+          type: object
+          properties:
+            maxDepth:
+              type: integer
+              minimum: 0
+              maximum: 10
+              default: 2
+            maxPages:
+              type: integer
+              minimum: 1
+              maximum: 500
+              default: 20
+            pathPrefix:
+              type: string
+              description: Only crawl URLs matching this path prefix
+            includePatterns:
+              type: array
+              items:
+                type: string
+              description: URL patterns to include
+            excludePatterns:
+              type: array
+              items:
+                type: string
+              description: URL patterns to exclude
+            respectRobots:
+              type: boolean
+              default: true
+            renderJs:
+              type: boolean
+              default: false
+              description: Use Playwright rendering
+            extractContent:
+              type: boolean
+              default: true
+              description: Extract and distill content from crawled pages
+            concurrency:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 2
+            strategy:
+              type: string
+              enum: [bfs, dfs]
+              default: bfs
+              description: Crawl strategy — breadth-first or depth-first
+            sitemapUrl:
+              type: string
+              format: uri
+              description: Sitemap URL to use for discovery
+
+    CrawlJobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed, cancelled]
+        pagesFound:
+          type: integer
+        pagesCrawled:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    # ── Jobs schemas ──────────────────────────────────────────────────
+    JobRequest:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          enum: [fetch, crawl, extract, workflow, research]
+        payload:
+          type: object
+          additionalProperties: true
+          description: Job-type-specific payload
+        options:
+          type: object
+          properties:
+            priority:
+              type: integer
+              minimum: 1
+              maximum: 10
+            webhookUrl:
+              type: string
+              format: uri
+              description: URL to POST results to on completion
+            retries:
+              type: integer
+              minimum: 0
+              maximum: 10
+            timeout:
+              type: integer
+              minimum: 1000
+              maximum: 3600000
+              description: Timeout in milliseconds
+            metadata:
+              type: object
+              additionalProperties: true
+
+    JobResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+        type:
+          type: string
+          enum: [fetch, crawl, extract, workflow, research]
+        status:
+          type: string
+        priority:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        result:
+          type: object
+          additionalProperties: true
+        error:
+          type: string
+
+    # ── Watch schemas ─────────────────────────────────────────────────
+    WatchRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: URL to monitor for changes
+        interval:
+          type: integer
+          minimum: 60
+          default: 3600
+          description: Check interval in seconds (minimum 60)
+        webhookUrl:
+          type: string
+          format: uri
+          description: URL to POST change notifications to
+        changeThreshold:
+          type: number
+          minimum: 0
+          maximum: 100
+          default: 1
+          description: Minimum change percentage to trigger a notification
+        extractPolicy:
+          type: string
+          description: Extraction policy name to apply
+
+    WatchResponse:
+      type: object
+      properties:
+        watchId:
+          type: string
+        url:
+          type: string
+          format: uri
+        status:
+          type: string
+          enum: [active, paused, removed]
+        interval:
+          type: integer
+        changeThreshold:
+          type: number
+        lastChecked:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    WatchEvent:
+      type: object
+      properties:
+        eventId:
+          type: string
+        watchId:
+          type: string
+        changePercent:
+          type: number
+        detectedAt:
+          type: string
+          format: date-time
+
+    # ── Interact schemas ──────────────────────────────────────────────
+    InteractRequest:
+      type: object
+      required: [url, actions]
+      properties:
+        url:
+          type: string
+          format: uri
+        sessionId:
+          type: string
+          description: Reuse an existing browser session
+        actions:
+          type: array
+          items:
+            $ref: '#/components/schemas/BrowserAction'
+          minItems: 1
+        extract:
+          type: boolean
+          default: false
+          description: Extract page content after actions complete
+        extractPolicy:
+          type: string
+          default: default
+          description: Extraction policy to apply
+
+    BrowserAction:
+      type: object
+      required: [type]
+      properties:
+        type:
+          type: string
+          enum:
+            - click
+            - fill
+            - select
+            - scroll
+            - hover
+            - waitFor
+            - type
+            - screenshot
+            - evaluate
+            - getPageState
+        selector:
+          type: string
+          description: CSS selector for the target element
+        value:
+          type: string
+          description: Value for fill/type actions
+        values:
+          type: array
+          items:
+            type: string
+          description: Values for select action
+        direction:
+          type: string
+          enum: [up, down, top, bottom]
+          description: Scroll direction
+        condition:
+          type: object
+          properties:
+            kind:
+              type: string
+              enum: [selector, timeout, networkidle, expression]
+          additionalProperties: true
+          description: Wait condition for waitFor action
+        expression:
+          type: string
+          description: JavaScript expression for evaluate action
+        options:
+          type: object
+          additionalProperties: true
+
+    InteractResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        sessionId:
+          type: string
+        content:
+          type: object
+          additionalProperties: true
+          description: Extracted content (if extract was true)
+
+    # ── Workflow schemas ──────────────────────────────────────────────
+    WorkflowExecuteRequest:
+      type: object
+      required: [workflow]
+      properties:
+        workflow:
+          type: object
+          required: [name, steps]
+          properties:
+            name:
+              type: string
+            description:
+              type: string
+            options:
+              type: object
+              properties:
+                timeout:
+                  type: number
+                  description: Workflow timeout in milliseconds
+                continueOnError:
+                  type: boolean
+                  default: false
+                sessionTtl:
+                  type: number
+                  description: Session TTL in milliseconds
+            variables:
+              type: object
+              additionalProperties:
+                type: string
+              description: Template variables available to steps
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowStep'
+              minItems: 1
+
+    WorkflowStep:
+      type: object
+      required: [action]
+      properties:
+        name:
+          type: string
+        action:
+          type: string
+          description: Step action type (fetch, interact, extract, etc.)
+        params:
+          type: object
+          additionalProperties: true
+        condition:
+          type: string
+          description: Expression that must be truthy for step to execute
+        retries:
+          type: integer
+          minimum: 0
+
+    # ── Semantic schemas ──────────────────────────────────────────────
+    SemanticIndexRequest:
+      type: object
+      required: [documents]
+      properties:
+        documents:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [id, text]
+            properties:
+              id:
+                type: string
+              text:
+                type: string
+                description: Text to embed
+              content:
+                type: string
+                description: Full document content (optional)
+              metadata:
+                type: object
+                additionalProperties: true
+
     SemanticSearchRequest:
       type: object
-      required:
-        - query
+      required: [query]
       properties:
         query:
           type: string
-          description: Search query
         k:
           type: integer
           minimum: 1
           maximum: 20
           default: 5
-          description: Number of results to return
         sessionId:
           type: string
-          format: uuid
-          description: Optional session ID for context
+        minScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        filter:
+          type: object
+          additionalProperties: true
+          description: Metadata filters
 
-    CreateSessionRequest:
+    SemanticSearchResponse:
       type: object
       properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              text:
+                type: string
+              content:
+                type: string
+              score:
+                type: number
+              metadata:
+                type: object
+                additionalProperties: true
+
+    RAGRequest:
+      type: object
+      required: [query]
+      properties:
+        query:
+          type: string
+        sessionId:
+          type: string
+        k:
+          type: integer
+          minimum: 1
+          maximum: 10
+          default: 5
+        minScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        summaryLevels:
+          type: array
+          items:
+            type: string
+            enum: [headline, paragraph, detailed]
+        skipCache:
+          type: boolean
+          default: false
+
+    RAGResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+        citations:
+          type: array
+          items:
+            type: object
+            properties:
+              documentId:
+                type: string
+              text:
+                type: string
+              score:
+                type: number
+        summaries:
+          type: array
+          items:
+            type: object
+            properties:
+              level:
+                type: string
+                enum: [headline, paragraph, detailed]
+              text:
+                type: string
+              confidence:
+                type: number
+        _cached:
+          type: boolean
+
+    # ── Memory schemas ────────────────────────────────────────────────
+    SessionResponse:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        entries:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              content:
+                type: string
+              type:
+                type: string
+                enum: [note, context, summary]
+              metadata:
+                type: object
+                additionalProperties: true
+              createdAt:
+                type: string
+                format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    MemoryEntryRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+        type:
+          type: string
+          enum: [note, context, summary]
+          default: note
         metadata:
           type: object
           additionalProperties: true
-          description: Optional session metadata
 
+    # ── Common schemas ────────────────────────────────────────────────
     HealthResponse:
       type: object
       properties:
@@ -343,31 +1494,6 @@ components:
             poolDepth:
               type: integer
 
-    SessionResponse:
-      type: object
-      properties:
-        sessionId:
-          type: string
-          format: uuid
-        createdAt:
-          type: string
-          format: date-time
-
-    SemanticSearchResponse:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              content:
-                type: string
-              score:
-                type: number
-              metadata:
-                type: object
-
     Error:
       type: object
       properties:
@@ -377,13 +1503,14 @@ components:
           type: string
         details:
           type: object
+          additionalProperties: true
 
     RateLimitError:
       type: object
       properties:
         error:
           type: string
-          example: "Rate limit exceeded"
+          example: Rate limit exceeded
         message:
           type: string
         retryAfter:

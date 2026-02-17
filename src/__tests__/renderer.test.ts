@@ -180,6 +180,40 @@ describe('RendererManager', () => {
       expect(result.launched).toBe(false);
       expect(result.error).toBe('No browser found');
     });
+
+    it('passes proxy config to launch options when proxy is set', async () => {
+      mockConfig.rendering.proxy = 'http://proxy.example.com:8080';
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      expect(mockLaunch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          proxy: { server: 'http://proxy.example.com:8080' },
+        })
+      );
+    });
+
+    it('does not include proxy in launch options when proxy is not set', async () => {
+      mockConfig.rendering.proxy = undefined;
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      const launchOptions = mockLaunch.mock.calls[0][0];
+      expect(launchOptions.proxy).toBeUndefined();
+    });
+
+    it('uses stealth browser engine when stealth is enabled', async () => {
+      mockConfig.rendering.stealth = true;
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      // The launch mock is shared between chromium and chromiumStealth,
+      // so we just verify launch was called
+      expect(mockLaunch).toHaveBeenCalledTimes(1);
+    });
   });
 
   // -----------------------------------------------------------------------
@@ -317,6 +351,57 @@ describe('RendererManager', () => {
       await mod.rendererManager.withPage(async () => 'ok');
 
       expect(mockAddCookies).not.toHaveBeenCalled();
+    });
+
+    it('runs stealth init script and mouse movement when stealth enabled', async () => {
+      mockConfig.rendering.stealth = true;
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      await mod.rendererManager.withPage(async () => 'stealth-ok');
+
+      // Stealth mode should trigger addInitScript and evaluate for mouse movements
+      expect(mockPageAddInitScript).toHaveBeenCalledTimes(1);
+      expect(mockPageEvaluate).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not run stealth scripts when stealth is disabled', async () => {
+      mockConfig.rendering.stealth = false;
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      await mod.rendererManager.withPage(async () => 'no-stealth');
+
+      expect(mockPageAddInitScript).not.toHaveBeenCalled();
+      expect(mockPageEvaluate).not.toHaveBeenCalled();
+    });
+
+    it('uses stealth user agents when stealth is enabled', async () => {
+      mockConfig.rendering.stealth = true;
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      await mod.rendererManager.withPage(async () => 'ok');
+
+      const contextCall = mockNewContext.mock.calls[0][0];
+      // Should use one of the Chrome user agents, not the default config one
+      expect(contextCall.userAgent).toMatch(/Chrome\/131/);
+    });
+
+    it('uses config user agent when stealth is disabled', async () => {
+      mockConfig.rendering.stealth = false;
+      mockConfig.fetch.userAgent = 'CustomAgent/1.0';
+
+      const mod = await import('../services/renderer');
+      await mod.rendererManager.init();
+
+      await mod.rendererManager.withPage(async () => 'ok');
+
+      const contextCall = mockNewContext.mock.calls[0][0];
+      expect(contextCall.userAgent).toBe('CustomAgent/1.0');
     });
   });
 

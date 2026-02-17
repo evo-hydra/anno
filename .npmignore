@@ -1,0 +1,16 @@
+src/
+benchmarks/
+docs/
+.github/
+.sentinel/
+data/
+coverage/
+*.test.ts
+*.test.js
+vitest.config.ts
+tsconfig.json
+eslint.config.mjs
+.env*
+.mcp.json
+UPGRADE_AUDIT.md
+2026-02-10_14-40.png
