@@ -2,7 +2,7 @@
 
 **Web content extraction for AI agents. 93% fewer tokens than raw HTML.**
 
-Anno fetches web pages, strips the noise, and returns clean structured text — so your AI agent spends tokens on content, not markup.
+Anno fetches web pages, runs an ensemble of extraction methods with confidence scoring, and returns clean structured text — so your AI agent spends tokens on content, not markup. Available via HTTP API, CLI, and MCP.
 
 ## Benchmark (N=20)
 

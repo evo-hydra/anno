@@ -1,7 +1,7 @@
 {
   "name": "@evointel/anno",
   "version": "1.0.0",
-  "description": "Anno - AI-native web content extractor with semantic understanding",
+  "description": "Web content extraction for AI agents — ensemble extraction with confidence scoring, 93% token reduction vs raw HTML",
   "private": false,
   "engines": {
     "node": ">=18"
@@ -79,11 +79,13 @@
     "@types/express": "^5.0.3",
     "@types/jsdom": "^21.1.7",
     "@types/node": "^24.5.2",
+    "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
     "@vitest/coverage-v8": "^4.0.18",
     "axios": "^1.13.5",
     "eslint": "^9.36.0",
+    "supertest": "^7.2.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2",
     "vitest": "^4.0.18"
