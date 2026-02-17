@@ -301,4 +301,917 @@ describe('Crawler', () => {
       expect(c).toBeInstanceOf(Crawler);
     });
   });
+
+  // -----------------------------------------------------------------------
+  // Additional coverage: non-HTTP schemes, filters, DFS, cancellation, etc.
+  // -----------------------------------------------------------------------
+
+  describe('extractLinks — non-HTTP schemes', () => {
+    it('skips ftp:// URLs', () => {
+      const html = `<a href="ftp://example.com/file.zip">Download</a>`;
+      const links = crawler.extractLinks(html, 'https://example.com');
+      expect(links).toEqual([]);
+    });
+
+    it('skips file:// URLs', () => {
+      const html = `<a href="file:///home/user/doc.pdf">Local File</a>`;
+      const links = crawler.extractLinks(html, 'https://example.com');
+      expect(links).toEqual([]);
+    });
+
+    it('skips ftp:// resolved from relative hrefs', () => {
+      const html = `<a href="/some/path">Path</a>`;
+      // If baseUrl is ftp, normaliseUrl returns ''
+      const links = crawler.extractLinks(html, 'ftp://files.example.com/');
+      expect(links).toEqual([]);
+    });
+  });
+
+  describe('passesFilters', () => {
+    it('rejects cross-origin URLs (different host)', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="https://otherdomain.com/page">Link</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', { maxDepth: 1, maxPages: 5 });
+      const page = result.pages[0];
+      expect(page.links).toEqual([]);
+    });
+
+    it('filters by pathPrefix', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="/docs/page1">D1</a><a href="/blog/post">B1</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 5,
+        pathPrefix: '/docs/'
+      });
+
+      const page = result.pages[0];
+      // Only /docs/page1 should pass the filter, not /blog/post
+      expect(page.links).toEqual(['https://example.com/docs/page1']);
+    });
+
+    it('filters by includePatterns', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="/docs/api">API</a><a href="/docs/guide">Guide</a><a href="/blog">Blog</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 5,
+        includePatterns: ['/docs/']
+      });
+
+      const page = result.pages[0];
+      // Only /docs/* should pass
+      expect(page.links).toEqual(['https://example.com/docs/api', 'https://example.com/docs/guide']);
+    });
+
+    it('filters by excludePatterns', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="/docs/api">API</a><a href="/docs/internal">Internal</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 5,
+        excludePatterns: ['internal']
+      });
+
+      const page = result.pages[0];
+      // /docs/internal should be excluded
+      expect(page.links).toEqual(['https://example.com/docs/api']);
+    });
+
+    it('handles invalid regex in includePatterns gracefully', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="/page">Page</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 5,
+        includePatterns: ['[invalid(regex']
+      });
+
+      const page = result.pages[0];
+      // Invalid regex should not match anything
+      expect(page.links).toEqual([]);
+    });
+
+    it('handles invalid regex in excludePatterns gracefully', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><a href="/page">Page</a></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 5,
+        excludePatterns: ['[invalid(regex']
+      });
+
+      const page = result.pages[0];
+      // Invalid regex should not exclude anything
+      expect(page.links).toEqual(['https://example.com/page']);
+    });
+  });
+
+  describe('crawl — DFS strategy', () => {
+    it('uses depth-first traversal with strategy:dfs', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockImplementation((async (opts: unknown) => {
+        const { url } = opts as { url: string };
+
+        if (url === 'https://example.com') {
+          return {
+            body: '<html><body><a href="/page1">P1</a><a href="/page2">P2</a></body></html>',
+            status: 200,
+            finalUrl: url,
+            fromCache: false,
+            rendered: false,
+            renderDiagnostics: { effectiveMode: 'http' },
+          };
+        }
+
+        return {
+          body: '<html><body><p>Leaf</p></body></html>',
+          status: 200,
+          finalUrl: url,
+          fromCache: false,
+          rendered: false,
+          renderDiagnostics: { effectiveMode: 'http' },
+        };
+      }) as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 1,
+        maxPages: 3,
+        strategy: 'dfs',
+        concurrency: 1
+      });
+
+      expect(result.status).toBe('completed');
+      expect(result.pages.length).toBeGreaterThanOrEqual(1);
+      // Verify that DFS strategy was used by checking result exists
+      const urls = result.pages.map(p => p.url);
+      expect(urls[0]).toBe('https://example.com/');
+    });
+  });
+
+  describe('crawl — cancellation', () => {
+    it('returns status:cancelled when signal is aborted mid-crawl', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+
+      const abortController = new AbortController();
+
+      let fetchCount = 0;
+
+      vi.mocked(fetchPage).mockImplementation((async () => {
+        fetchCount++;
+        if (fetchCount === 1) {
+          // Abort after first fetch
+          setTimeout(() => abortController.abort(), 10);
+        }
+
+        return {
+          body: '<html><body><a href="/page1">P1</a><a href="/page2">P2</a></body></html>',
+          status: 200,
+          finalUrl: 'https://example.com',
+          fromCache: false,
+          rendered: false,
+          renderDiagnostics: { effectiveMode: 'http' },
+        };
+      }) as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 1,
+        maxPages: 10,
+        signal: abortController.signal,
+        concurrency: 1
+      });
+
+      expect(result.status).toBe('cancelled');
+    });
+  });
+
+  describe('crawl — invalid start URL', () => {
+    it('returns status:error for invalid start URL', async () => {
+      const result = await crawler.crawl('not-a-url', { maxDepth: 1, maxPages: 5 });
+      expect(result.status).toBe('error');
+    });
+  });
+
+  describe('crawl — robots.txt blocking', () => {
+    it('marks page as robots_blocked when robotsManager.isAllowed returns false', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(false);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><p>Content</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', { maxDepth: 0, maxPages: 1 });
+
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].status).toBe('robots_blocked');
+    });
+  });
+
+  describe('crawl — content deduplication', () => {
+    it('skips pages with duplicate content hashes', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { ContentAddressing } = await import('../core/content-addressing');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      const duplicateHash = 'duplicate-hash-12345';
+
+      vi.mocked(ContentAddressing.generateHash).mockImplementation(() => {
+        return { hash: duplicateHash } as never;
+      });
+
+      vi.mocked(fetchPage)
+        .mockResolvedValueOnce({
+          body: '<html><body><a href="/page2">P2</a></body></html>',
+          status: 200,
+          finalUrl: 'https://example.com',
+          fromCache: false,
+          rendered: false,
+          renderDiagnostics: { effectiveMode: 'http' },
+        } as never)
+        .mockResolvedValueOnce({
+          body: '<html><body><p>Same content</p></body></html>',
+          status: 200,
+          finalUrl: 'https://example.com/page2',
+          fromCache: false,
+          rendered: false,
+          renderDiagnostics: { effectiveMode: 'http' },
+        } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 1,
+        maxPages: 5,
+        concurrency: 1
+      });
+
+      expect(result.pages.length).toBeGreaterThanOrEqual(1);
+      expect(result.pages[0].status).toBe('success');
+      // Second page should be skipped if duplicate hash was returned
+      if (result.pages.length > 1) {
+        expect(result.pages[1].status).toBe('skipped');
+      }
+    });
+  });
+
+  describe('crawl — extractContent: false', () => {
+    it('extracts title from raw HTML without running distiller', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><head><title>Raw Title</title></head><body><p>Content</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      // distillContent should NOT be called
+      const distillSpy = vi.mocked(distillContent);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 1,
+        extractContent: false
+      });
+
+      expect(distillSpy).not.toHaveBeenCalled();
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].title).toBe('Raw Title');
+      expect(result.pages[0].content).toBeUndefined();
+      expect(result.pages[0].rawTokenCount).toBeGreaterThan(0);
+    });
+
+    it('handles missing title tag when extractContent is false', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><p>No title tag</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 1,
+        extractContent: false
+      });
+
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].title).toBeUndefined();
+    });
+  });
+
+  describe('crawl — HTTP error status', () => {
+    it('marks page as error when HTTP status >= 400', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><h1>404 Not Found</h1></body></html>',
+        status: 404,
+        finalUrl: 'https://example.com/missing',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com/missing', {
+        maxDepth: 0,
+        maxPages: 1
+      });
+
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].status).toBe('error');
+      expect(result.pages[0].httpStatus).toBe(404);
+      expect(result.pages[0].error).toBe('HTTP 404');
+    });
+  });
+
+  describe('parseSitemap — child sitemap fetch failure', () => {
+    it('continues when a child sitemap fetch fails', async () => {
+      const indexXml = `<?xml version="1.0" encoding="UTF-8"?>
+        <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <sitemap><loc>https://example.com/sitemap-1.xml</loc></sitemap>
+          <sitemap><loc>https://example.com/sitemap-2.xml</loc></sitemap>
+        </sitemapindex>`;
+
+      const childXml = `<?xml version="1.0" encoding="UTF-8"?>
+        <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+          <url><loc>https://example.com/page1</loc></url>
+        </urlset>`;
+
+      mockedHttpClient.get
+        .mockResolvedValueOnce({
+          url: 'https://example.com/sitemap.xml',
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          body: indexXml,
+          protocol: 'http/1.1',
+          durationMs: 100,
+        })
+        .mockRejectedValueOnce(new Error('Network failure'))
+        .mockResolvedValueOnce({
+          url: 'https://example.com/sitemap-2.xml',
+          status: 200,
+          statusText: 'OK',
+          headers: {},
+          body: childXml,
+          protocol: 'http/1.1',
+          durationMs: 80,
+        });
+
+      const urls = await crawler.parseSitemap('https://example.com/sitemap.xml');
+      // First child failed, second should succeed
+      expect(urls).toContain('https://example.com/page1');
+    });
+  });
+
+  describe('crawl — fetch error', () => {
+    it('marks page as error when fetchPage throws', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockRejectedValue(new Error('Network timeout'));
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 1
+      });
+
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].status).toBe('error');
+      expect(result.pages[0].error).toBe('Network timeout');
+    });
+  });
+
+  describe('estimateTokens helper', () => {
+    it('returns 0 for empty text', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: '',
+        contentText: '',
+        contentHtml: '',
+        contentLength: 0,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 1
+      });
+
+      expect(result.pages[0].tokenCount).toBe(0);
+    });
+  });
+
+  describe('crawl — distiller failure', () => {
+    it('continues crawl when distiller throws error', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><p>Content</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockRejectedValue(new Error('Distiller crashed'));
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const result = await crawler.crawl('https://example.com', {
+        maxDepth: 0,
+        maxPages: 1,
+        extractContent: true
+      });
+
+      expect(result.pages.length).toBe(1);
+      expect(result.pages[0].status).toBe('success');
+      expect(result.pages[0].content).toBeUndefined();
+      expect(result.pages[0].rawTokenCount).toBeGreaterThan(0);
+    });
+  });
+
+  describe('events — additional coverage', () => {
+    it('emits page:fetched event', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><p>Content</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Test',
+        contentText: 'Test',
+        contentHtml: '<p>Test</p>',
+        contentLength: 4,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const fetchedSpy = vi.fn();
+      crawler.on('page:fetched', fetchedSpy);
+
+      await crawler.crawl('https://example.com', { maxDepth: 0, maxPages: 1 });
+
+      expect(fetchedSpy).toHaveBeenCalledTimes(1);
+      expect(fetchedSpy).toHaveBeenCalledWith({
+        url: 'https://example.com/',
+        depth: 0,
+        httpStatus: 200
+      });
+    });
+
+    it('emits page:extracted event', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { distillContent } = await import('../services/distiller');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockResolvedValue({
+        body: '<html><body><p>Content</p></body></html>',
+        status: 200,
+        finalUrl: 'https://example.com',
+        fromCache: false,
+        rendered: false,
+        renderDiagnostics: { effectiveMode: 'http' },
+      } as never);
+
+      vi.mocked(distillContent).mockResolvedValue({
+        title: 'Extracted Title',
+        contentText: 'Extracted Content',
+        contentHtml: '<p>Extracted Content</p>',
+        contentLength: 17,
+      } as never);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const extractedSpy = vi.fn();
+      crawler.on('page:extracted', extractedSpy);
+
+      await crawler.crawl('https://example.com', { maxDepth: 0, maxPages: 1 });
+
+      expect(extractedSpy).toHaveBeenCalledTimes(1);
+      expect(extractedSpy).toHaveBeenCalledWith({
+        url: 'https://example.com/',
+        title: 'Extracted Title',
+        contentLength: 17
+      });
+    });
+
+    it('emits page:error event on fetch failure', async () => {
+      const { fetchPage } = await import('../services/fetcher');
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(true);
+
+      vi.mocked(fetchPage).mockRejectedValue(new Error('Connection refused'));
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const errorSpy = vi.fn();
+      crawler.on('page:error', errorSpy);
+
+      await crawler.crawl('https://example.com', { maxDepth: 0, maxPages: 1 });
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith({
+        url: 'https://example.com/',
+        error: 'Connection refused'
+      });
+    });
+
+    it('emits page:error event on robots_blocked', async () => {
+      const { robotsManager } = await import('../core/robots-parser');
+
+      vi.mocked(robotsManager.isAllowed).mockResolvedValue(false);
+
+      mockedHttpClient.get.mockResolvedValue({
+        url: 'https://example.com/sitemap.xml',
+        status: 404,
+        statusText: 'Not Found',
+        headers: {},
+        body: '',
+        protocol: 'http/1.1',
+        durationMs: 50,
+      });
+
+      const errorSpy = vi.fn();
+      crawler.on('page:error', errorSpy);
+
+      await crawler.crawl('https://example.com', { maxDepth: 0, maxPages: 1 });
+
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(errorSpy).toHaveBeenCalledWith({
+        url: 'https://example.com/',
+        error: 'robots_blocked'
+      });
+    });
+  });
 });

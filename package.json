@@ -28,7 +28,8 @@
     "validate:token": "tsx benchmarks/token-efficiency.ts",
     "validate:accuracy": "tsx benchmarks/extraction-accuracy.ts",
     "validate:traditional": "tsx benchmarks/anno-vs-traditional.ts",
-    "bench:llm-latency": "tsx benchmarks/llm-latency.ts"
+    "bench:llm-latency": "tsx benchmarks/llm-latency.ts",
+    "license:check": "license-checker --summary --production"
   },
   "keywords": [
     "anno",
@@ -83,13 +84,14 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jsdom": "^27.0.0",
-    "@types/node": "^24.5.2",
+    "@types/node": "^25.2.3",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
     "@vitest/coverage-v8": "^4.0.18",
     "axios": "^1.13.5",
     "eslint": "^10.0.0",
+    "license-checker": "^25.0.1",
     "supertest": "^7.2.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2",

@@ -5,6 +5,30 @@ All notable changes to Anno will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Route integration tests for all 8 API endpoints (content, crawl, interact, jobs, memory, semantic, watch, workflow)
+- `anno setup claude-code` CLI command for MCP server configuration
+- Supertest-based integration smoke tests for health, metrics, CORS, security headers, and 404 handling
+- License audit via `license-checker` (`npm run license:check`)
+- Tests for request-context middleware, ebay-url-builder, and provenance-verify utilities
+
+### Changed
+- All 19 outdated dependencies upgraded to latest (lru-cache 10→11, commander 13→14, jsdom 22→28, eslint 9→10, @langchain/openai 0.6→1.2, @anthropic-ai/sdk 0.65→0.75, and more)
+- Extracted Express app factory (`src/app.ts`) from `src/server.ts` for testability
+- ESLint ignores now include `coverage/` directory
+- Bumped `@types/node` from v24 to v25
+- Raised branch coverage CI threshold from 60% to 65%
+
+### Fixed
+- Express 5 `req.params` type narrowing in crawl, jobs, and watch routes (use `String()` wrapper)
+
+### Testing
+- 2,290 tests across 86 test files (up from 1,958 across 72)
+- 81.42% line coverage, 69.79% branch coverage, 82.4% function coverage
+- Extended test coverage for pipeline, crawler, fetcher, distiller core services
+
 ## [1.0.0] - 2025-10-20
 
 ### Added
