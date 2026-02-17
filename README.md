@@ -1,5 +1,10 @@
 # Anno
 
+[![CI](https://github.com/evo-hydra/anno/actions/workflows/ci.yml/badge.svg)](https://github.com/evo-hydra/anno/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/@evointel/anno)](https://www.npmjs.com/package/@evointel/anno)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Coverage](https://img.shields.io/badge/coverage-85%25_lines_|_75%25_branches-brightgreen)](./)
+
 **Web content extraction for AI agents. 93% fewer tokens than raw HTML.**
 
 Anno fetches web pages, runs an ensemble of extraction methods with confidence scoring, and returns clean structured text — so your AI agent spends tokens on content, not markup. Available via HTTP API, CLI, and MCP.

@@ -35,3 +35,13 @@ coverage/
 tmp/
 temp/
 .anno/
+
+# Local config & data
+.mcp.json
+.sentinel/
+data/
+
+# Generated reports & artifacts
+benchmarks/reports/
+UPGRADE_AUDIT.md
+*.png
