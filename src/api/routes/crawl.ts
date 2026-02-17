@@ -221,7 +221,7 @@ router.get('/jobs', (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:jobId', (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const job = jobs.get(jobId);
 
   if (!job) {
@@ -262,7 +262,7 @@ router.get('/:jobId', (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:jobId/results', (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const job = jobs.get(jobId);
 
   if (!job) {
@@ -296,7 +296,7 @@ router.get('/:jobId/results', (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.delete('/:jobId', (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const job = jobs.get(jobId);
 
   if (!job) {

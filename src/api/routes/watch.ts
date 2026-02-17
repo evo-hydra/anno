@@ -78,7 +78,7 @@ router.get('/', (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:watchId', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
   const watch = watchManager.getWatch(watchId);
 
   if (!watch) {
@@ -103,7 +103,7 @@ router.get('/:watchId', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.delete('/:watchId', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
 
   const removed = await watchManager.removeWatch(watchId);
   if (!removed) {
@@ -119,7 +119,7 @@ router.delete('/:watchId', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.put('/:watchId/pause', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
 
   const watch = await watchManager.pauseWatch(watchId);
   if (!watch) {
@@ -135,7 +135,7 @@ router.put('/:watchId/pause', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.put('/:watchId/resume', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
 
   const watch = await watchManager.resumeWatch(watchId);
   if (!watch) {
@@ -151,7 +151,7 @@ router.put('/:watchId/resume', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:watchId/events', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
   const watch = watchManager.getWatch(watchId);
 
   if (!watch) {
@@ -182,7 +182,7 @@ router.get('/:watchId/events', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:watchId/history', async (req: Request, res: Response) => {
-  const { watchId } = req.params;
+  const watchId = String(req.params.watchId);
   const watch = watchManager.getWatch(watchId);
 
   if (!watch) {

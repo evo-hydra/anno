@@ -108,7 +108,7 @@ router.get('/', asyncHandler(async (_req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const queue = getJobQueue();
   const job = await queue.getJob(jobId);
 
@@ -130,7 +130,7 @@ router.get('/:jobId', asyncHandler(async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.delete('/:jobId', asyncHandler(async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const queue = getJobQueue();
 
   const job = await queue.getJob(jobId);
@@ -169,7 +169,7 @@ router.delete('/:jobId', asyncHandler(async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 
 router.get('/:jobId/stream', async (req: Request, res: Response) => {
-  const { jobId } = req.params;
+  const jobId = String(req.params.jobId);
   const queue = getJobQueue();
   const job = await queue.getJob(jobId);
 
