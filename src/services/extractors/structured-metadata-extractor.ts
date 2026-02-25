@@ -44,22 +44,38 @@ export class StructuredMetadataExtractor {
 
       try {
         const parsed = JSON.parse(text);
-        // Accept objects with @context or @type, or arrays of such objects
-        if (Array.isArray(parsed)) {
-          for (const item of parsed) {
-            if (item && typeof item === 'object' && ('@context' in item || '@type' in item)) {
-              results.push(item as Record<string, unknown>);
-            }
-          }
-        } else if (parsed && typeof parsed === 'object' && ('@context' in parsed || '@type' in parsed)) {
-          results.push(parsed as Record<string, unknown>);
-        }
+        this.collectJsonLdItems(parsed, results);
       } catch {
         // Malformed JSON-LD — skip silently
       }
     });
 
     return results;
+  }
+
+  private collectJsonLdItems(parsed: unknown, results: Record<string, unknown>[]): void {
+    if (!parsed || typeof parsed !== 'object') return;
+
+    if (Array.isArray(parsed)) {
+      for (const item of parsed) {
+        this.collectJsonLdItems(item, results);
+      }
+      return;
+    }
+
+    const obj = parsed as Record<string, unknown>;
+
+    // Flatten @graph arrays (used by news sites, Google structured data)
+    if (Array.isArray(obj['@graph'])) {
+      for (const item of obj['@graph']) {
+        this.collectJsonLdItems(item, results);
+      }
+    }
+
+    // Collect objects with @context or @type
+    if ('@context' in obj || '@type' in obj) {
+      results.push(obj);
+    }
   }
 
   private extractOpenGraph(document: Document): Record<string, string> {
