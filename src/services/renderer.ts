@@ -2,11 +2,116 @@ import { chromium, type Browser, type Page, type BrowserContext } from 'playwrig
 import { addExtra } from 'playwright-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
 import { config } from '../config/env';
+import { STEALTH_USER_AGENTS } from '../config/user-agents';
 import { logger } from '../utils/logger';
 
 // Add stealth plugin to playwright
 const chromiumStealth = addExtra(chromium);
 chromiumStealth.use(StealthPlugin());
+
+// Stealth scripts as strings to avoid tsx/esbuild __name helper injection.
+// When passed as arrow functions, the transpiler wraps them with helpers
+// that reference `__name` — which doesn't exist in the browser context.
+const STEALTH_INIT_SCRIPT = `
+  // Override navigator.webdriver
+  Object.defineProperty(navigator, 'webdriver', { get: function() { return false; } });
+
+  // Remove automation indicators
+  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+  delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+
+  // Add realistic plugins
+  Object.defineProperty(navigator, 'plugins', {
+    get: function() { return [1, 2, 3, 4, 5]; }
+  });
+
+  // Mock languages
+  Object.defineProperty(navigator, 'languages', {
+    get: function() { return ['en-US', 'en']; }
+  });
+
+  // Mock realistic Chrome properties
+  Object.defineProperty(navigator, 'platform', {
+    get: function() { return 'Win32'; }
+  });
+
+  Object.defineProperty(navigator, 'vendor', {
+    get: function() { return 'Google Inc.'; }
+  });
+
+  // Mock permissions
+  var originalQuery = window.navigator.permissions.query.bind(window.navigator.permissions);
+  window.navigator.permissions.query = function(parameters) {
+    return parameters.name === 'notifications'
+      ? Promise.resolve({ state: 'denied' })
+      : originalQuery(parameters);
+  };
+
+  // Add realistic navigator properties
+  Object.defineProperty(navigator, 'hardwareConcurrency', {
+    get: function() { return 8; }
+  });
+
+  Object.defineProperty(navigator, 'deviceMemory', {
+    get: function() { return 8; }
+  });
+
+  // Mock connection
+  Object.defineProperty(navigator, 'connection', {
+    get: function() {
+      return { effectiveType: '4g', rtt: 50, downlink: 10, saveData: false };
+    }
+  });
+
+  // WebGL fingerprinting protection
+  var origGetParameter = WebGLRenderingContext.prototype.getParameter;
+  WebGLRenderingContext.prototype.getParameter = function(parameter) {
+    if (parameter === 37445) return 'Intel Inc.';
+    if (parameter === 37446) return 'Intel Iris OpenGL Engine';
+    return origGetParameter.call(this, parameter);
+  };
+
+  // Canvas fingerprinting protection (noise injection)
+  var origToDataURL = HTMLCanvasElement.prototype.toDataURL;
+  HTMLCanvasElement.prototype.toDataURL = function() {
+    var ctx = this.getContext('2d');
+    if (ctx) {
+      var imageData = ctx.getImageData(0, 0, this.width, this.height);
+      for (var i = 0; i < imageData.data.length; i += 4) {
+        imageData.data[i] += Math.floor(Math.random() * 3) - 1;
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+    return origToDataURL.apply(this, arguments);
+  };
+
+  // Audio fingerprinting protection
+  var audioContext = window.AudioContext || window.webkitAudioContext;
+  if (audioContext) {
+    var origGetChannelData = audioContext.prototype.getChannelData;
+    audioContext.prototype.getChannelData = function() {
+      var buffer = origGetChannelData.apply(this, arguments);
+      for (var i = 0; i < buffer.length; i++) {
+        buffer[i] += Math.random() * 0.0001;
+      }
+      return buffer;
+    };
+  }
+`;
+
+// Random mouse movements for human-like behavior
+const MOUSE_MOVEMENT_SCRIPT = `
+  var mouseX = 0;
+  var mouseY = 0;
+  var moveRandomly = function() {
+    mouseX += (Math.random() - 0.5) * 100;
+    mouseY += (Math.random() - 0.5) * 100;
+    mouseX = Math.max(0, Math.min(window.innerWidth, mouseX));
+    mouseY = Math.max(0, Math.min(window.innerHeight, mouseY));
+  };
+  setInterval(moveRandomly, 5000 + Math.random() * 5000);
+`;
 
 class Semaphore {
   private available: number;
@@ -129,11 +234,7 @@ class RendererManager {
 
       // Enhanced user agents for stealth
       const userAgents = config.rendering.stealth
-        ? [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
-          ]
+        ? STEALTH_USER_AGENTS
         : [config.fetch.userAgent];
 
       const randomUserAgent = userAgents[Math.floor(Math.random() * userAgents.length)];
@@ -175,116 +276,11 @@ class RendererManager {
       const page = await context.newPage();
 
       // Additional stealth measures (COMPETITION KILLER MODE)
+      // NOTE: Scripts are passed as strings to avoid tsx/esbuild injecting
+      // __name helpers that don't exist in the browser context.
       if (config.rendering.stealth) {
-        await page.addInitScript(() => {
-          // Override navigator.webdriver
-          Object.defineProperty(navigator, 'webdriver', { get: () => false });
-
-          // Remove automation indicators
-          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Array;
-          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-          delete (window as unknown as Record<string, unknown>).cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-
-          // Add realistic plugins
-          Object.defineProperty(navigator, 'plugins', {
-            get: () => [1, 2, 3, 4, 5]
-          });
-
-          // Mock languages
-          Object.defineProperty(navigator, 'languages', {
-            get: () => ['en-US', 'en']
-          });
-
-          // Mock realistic Chrome properties
-          Object.defineProperty(navigator, 'platform', {
-            get: () => 'Win32'
-          });
-
-          Object.defineProperty(navigator, 'vendor', {
-            get: () => 'Google Inc.'
-          });
-
-          // Mock permissions
-          const originalQuery = window.navigator.permissions.query.bind(window.navigator.permissions);
-          (window.navigator.permissions as unknown as Record<string, unknown>).query = (parameters: PermissionDescriptor) =>
-            parameters.name === 'notifications'
-              ? Promise.resolve({ state: 'denied' } as PermissionStatus)
-              : originalQuery(parameters);
-
-          // Add realistic navigator properties
-          Object.defineProperty(navigator, 'hardwareConcurrency', {
-            get: () => 8
-          });
-
-          Object.defineProperty(navigator, 'deviceMemory', {
-            get: () => 8
-          });
-
-          // Mock connection
-          Object.defineProperty(navigator, 'connection', {
-            get: () => ({
-              effectiveType: '4g',
-              rtt: 50,
-              downlink: 10,
-              saveData: false
-            })
-          });
-
-          // WebGL fingerprinting protection
-          const getParameter = WebGLRenderingContext.prototype.getParameter;
-          WebGLRenderingContext.prototype.getParameter = function (parameter: number) {
-            if (parameter === 37445) {
-              return 'Intel Inc.';
-            }
-            if (parameter === 37446) {
-              return 'Intel Iris OpenGL Engine';
-            }
-            return getParameter.call(this, parameter);
-          };
-
-          // Canvas fingerprinting protection (noise injection)
-          const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-          HTMLCanvasElement.prototype.toDataURL = function (...args) {
-            const context = this.getContext('2d');
-            if (context) {
-              const imageData = context.getImageData(0, 0, this.width, this.height);
-              for (let i = 0; i < imageData.data.length; i += 4) {
-                imageData.data[i] += Math.floor(Math.random() * 3) - 1;
-              }
-              context.putImageData(imageData, 0, 0);
-            }
-            return originalToDataURL.apply(this, args);
-          };
-
-          // Audio fingerprinting protection
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const audioContext = (window as unknown as Record<string, any>).AudioContext || (window as unknown as Record<string, any>).webkitAudioContext;
-          if (audioContext) {
-            const originalGetChannelData = audioContext.prototype.getChannelData;
-            audioContext.prototype.getChannelData = function () {
-              const buffer = originalGetChannelData.apply(this, arguments);
-              for (let i = 0; i < buffer.length; i++) {
-                buffer[i] += Math.random() * 0.0001;
-              }
-              return buffer;
-            };
-          }
-        });
-
-        // Random mouse movements for human-like behavior
-        await page.evaluate(() => {
-          let mouseX = 0;
-          let mouseY = 0;
-
-          const moveRandomly = () => {
-            mouseX += (Math.random() - 0.5) * 100;
-            mouseY += (Math.random() - 0.5) * 100;
-            mouseX = Math.max(0, Math.min(window.innerWidth, mouseX));
-            mouseY = Math.max(0, Math.min(window.innerHeight, mouseY));
-          };
-
-          setInterval(moveRandomly, 5000 + Math.random() * 5000);
-        });
+        await page.addInitScript({ content: STEALTH_INIT_SCRIPT });
+        await page.evaluate(MOUSE_MOVEMENT_SCRIPT);
       }
 
       const result = await handler(page, context);

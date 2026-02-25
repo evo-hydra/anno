@@ -8,9 +8,11 @@
  */
 
 import crypto from 'crypto';
+import { config } from '../config/env';
 import { distillContent } from '../services/distiller';
 import { fetchPage, type FetchMode } from '../services/fetcher';
 import { logger } from '../utils/logger';
+import { detectChallengePage, detectAuthWall, isGatedPage } from './wall-detector';
 
 export interface PipelineOptions {
   url: string;
@@ -55,76 +57,42 @@ const computeNodeConfidence = (overall: number, textLength: number, isHeading: b
   return clamp(overall + modifier, 0.1, 0.98);
 };
 
-interface ChallengeDetectionResult {
-  reason: string;
-  pattern: string;
-}
-
-const CHALLENGE_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
-  { pattern: /captcha/i, reason: 'captcha' },
-  { pattern: /verify you are human/i, reason: 'human_verification' },
-  { pattern: /are you a robot/i, reason: 'robot_check' },
-  { pattern: /access denied/i, reason: 'access_denied' },
-  { pattern: /perimeterx/i, reason: 'perimeterx' },
-  { pattern: /please enable javascript/i, reason: 'javascript_required' },
-  { pattern: /unusual traffic/i, reason: 'unusual_traffic' }
-];
-
-const detectChallengePage = (body: string): ChallengeDetectionResult | null => {
-  for (const { pattern, reason } of CHALLENGE_PATTERNS) {
-    if (pattern.test(body)) {
-      return { reason, pattern: pattern.source };
-    }
-  }
-  return null;
-};
-
 const sha256 = (input: string): string => crypto.createHash('sha256').update(input).digest('hex');
 
-export async function* runPipeline(options: PipelineOptions): AsyncGenerator<StreamEvent> {
-  const fetchResult = await fetchPage({ url: options.url, useCache: options.useCache, mode: options.mode });
+const buildMetadataPayload = (fetchResult: Awaited<ReturnType<typeof fetchPage>>): Record<string, unknown> => ({
+  url: fetchResult.url,
+  finalUrl: fetchResult.finalUrl,
+  status: fetchResult.status,
+  contentType: fetchResult.headers['content-type'] ?? null,
+  fetchTimestamp: fetchResult.fetchTimestamp,
+  durationMs: fetchResult.durationMs,
+  fromCache: fetchResult.fromCache,
+  rendered: fetchResult.rendered,
+  renderDiagnostics: fetchResult.renderDiagnostics,
+});
 
-  yield {
-    type: 'metadata',
-    payload: {
-      url: fetchResult.url,
-      finalUrl: fetchResult.finalUrl,
-      status: fetchResult.status,
-      contentType: fetchResult.headers['content-type'] ?? null,
-      fetchTimestamp: fetchResult.fetchTimestamp,
-      durationMs: fetchResult.durationMs,
-      fromCache: fetchResult.fromCache,
-      rendered: fetchResult.rendered,
-      renderDiagnostics: fetchResult.renderDiagnostics
-    }
-  } satisfies StreamEvent;
+export async function* runPipeline(options: PipelineOptions): AsyncGenerator<StreamEvent> {
+  let fetchResult = await fetchPage({ url: options.url, useCache: options.useCache, mode: options.mode });
+
+  yield { type: 'metadata', payload: buildMetadataPayload(fetchResult) } satisfies StreamEvent;
 
   if (!fetchResult.body) {
     logger.warn('empty body from fetch', { url: options.url });
     yield {
       type: 'alert',
-      payload: {
-        kind: 'empty_body',
-        url: options.url,
-        timestamp: Date.now()
-      }
+      payload: { kind: 'empty_body', url: options.url, timestamp: Date.now() }
     } satisfies StreamEvent;
     yield {
       type: 'done',
-      payload: {
-        reason: 'empty_body',
-        nodes: 0
-      }
+      payload: { reason: 'empty_body', nodes: 0 }
     } satisfies StreamEvent;
     return;
   }
 
+  // --- Gate detection (challenges + auth walls) ---
   const challenge = detectChallengePage(fetchResult.body);
   if (challenge) {
-    logger.warn('potential challenge page detected', {
-      url: options.url,
-      reason: challenge.reason
-    });
+    logger.warn('potential challenge page detected', { url: options.url, reason: challenge.reason });
     yield {
       type: 'alert',
       payload: {
@@ -137,13 +105,65 @@ export async function* runPipeline(options: PipelineOptions): AsyncGenerator<Str
     } satisfies StreamEvent;
   }
 
+  let authWallDetected = false;
+  const authWall = detectAuthWall(fetchResult.body);
+  if (authWall) {
+    authWallDetected = true;
+    logger.warn('auth wall detected', { url: options.url, reason: authWall.reason });
+    yield {
+      type: 'alert',
+      payload: {
+        kind: 'auth_wall_detected',
+        reason: authWall.reason,
+        pattern: authWall.pattern,
+        url: options.url,
+        timestamp: Date.now()
+      }
+    } satisfies StreamEvent;
+  }
+
+  // --- Auto-retry with rendering when gated (challenge OR auth wall) ---
+  const gated = challenge !== null || authWallDetected;
+  if (gated && options.mode === 'http' && config.rendering.enabled) {
+    logger.info('auto-retrying with rendered mode after gate detection', {
+      url: options.url,
+      trigger: authWall?.reason ?? challenge?.reason,
+    });
+    try {
+      const renderedResult = await fetchPage({ url: options.url, useCache: options.useCache, mode: 'rendered' });
+      if (renderedResult.body && !isGatedPage(renderedResult.body)) {
+        fetchResult = renderedResult;
+        authWallDetected = false;
+        // Emit corrected metadata so consumers see the actual fetch details
+        yield { type: 'metadata', payload: buildMetadataPayload(fetchResult) } satisfies StreamEvent;
+        yield {
+          type: 'alert',
+          payload: {
+            kind: 'gate_bypassed',
+            method: 'rendered_retry',
+            trigger: authWall?.reason ?? challenge?.reason,
+            url: options.url,
+            timestamp: Date.now()
+          }
+        } satisfies StreamEvent;
+      }
+    } catch (err) {
+      logger.warn('rendered retry after gate detection failed', { url: options.url, error: String(err) });
+    }
+  }
+
   const distillation = await distillContent(fetchResult.body, fetchResult.finalUrl);
-  const overallConfidence = computeConfidence(
+  let overallConfidence = computeConfidence(
     distillation.contentLength,
     distillation.byline,
     distillation.nodes.length,
     distillation.fallbackUsed
   );
+  // If auth wall is still detected after potential retry, cap confidence
+  if (authWallDetected) {
+    overallConfidence = Math.min(overallConfidence, 0.15);
+  }
+
   const extractionMethod =
     distillation.extractionMethod ??
     (distillation.fallbackUsed ? 'fallback-dom' : 'readability');
@@ -153,6 +173,7 @@ export async function* runPipeline(options: PipelineOptions): AsyncGenerator<Str
     type: 'confidence',
     payload: {
       overallConfidence,
+      authWall: authWallDetected,
       heuristics: {
         fallbackUsed: distillation.fallbackUsed,
         nodeCount: distillation.nodes.length,

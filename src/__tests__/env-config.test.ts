@@ -11,6 +11,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { DEFAULT_USER_AGENT } from '../config/user-agents';
 
 // ---------------------------------------------------------------------------
 // We need to test the config module with controlled env vars. Since config
@@ -84,7 +85,7 @@ describe('env.ts config parsing', () => {
 
     it('fetch defaults', async () => {
       const { config } = await import('../config/env');
-      expect(config.fetch.userAgent).toBe('Anno/1.0');
+      expect(config.fetch.userAgent).toBe(DEFAULT_USER_AGENT);
       expect(config.fetch.timeoutMs).toBe(15000);
       expect(config.fetch.respectRobots).toBe(true);
       expect(config.fetch.overrideRobots).toBe(false);

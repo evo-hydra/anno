@@ -1,3 +1,5 @@
+import { DEFAULT_USER_AGENT } from './user-agents';
+
 export interface AppConfig {
   port: number;
   cache: {
@@ -119,7 +121,7 @@ export const config: AppConfig = {
     ttlMs: numberFromEnv(process.env.REDIS_TTL_MS, 1000 * 60 * 60) // 1 hour default
   },
   fetch: {
-    userAgent: process.env.USER_AGENT ?? 'Anno/1.0',
+    userAgent: process.env.USER_AGENT ?? DEFAULT_USER_AGENT,
     timeoutMs: numberFromEnv(process.env.FETCH_TIMEOUT_MS, 15000),
     respectRobots: booleanFromEnv(process.env.RESPECT_ROBOTS, true),
     overrideRobots: booleanFromEnv(process.env.OVERRIDE_ROBOTS, false)
