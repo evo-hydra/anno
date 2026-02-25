@@ -174,6 +174,9 @@ class RendererManager {
     if (!this.launching) {
       const launchOptions = {
         headless: config.rendering.headless,
+        ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH && {
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH
+        }),
         args: [
           '--disable-dev-shm-usage',
           '--no-sandbox',
