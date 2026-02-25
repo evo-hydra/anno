@@ -10,6 +10,165 @@ import { trafilaturaExtract } from './extractors/trafilatura';
 import { confidenceScorer, type ConfidenceBreakdown } from '../core/confidence-scorer';
 import { logger } from '../utils/logger';
 import { policyEngine, type PolicyApplicationResult } from './policy-engine';
+import { structuredMetadataExtractor, type StructuredMetadata } from './extractors/structured-metadata-extractor';
+import { tableExtractor, type ExtractedTable } from './extractors/table-extractor';
+
+/**
+ * Extract structured metadata and tables from raw HTML.
+ * Uses a fresh JSDOM instance since Readability mutates the DOM.
+ * Returns empty results on failure — never throws.
+ */
+const extractStructuredData = (
+  html: string,
+  baseUrl: string
+): { structuredMetadata?: StructuredMetadata; tables?: ExtractedTable[] } => {
+  try {
+    const freshDom = new JSDOM(html, { url: baseUrl });
+    const freshDoc = freshDom.window.document;
+
+    let structuredMetadata: StructuredMetadata | undefined;
+    const metadata = structuredMetadataExtractor.extract(freshDoc);
+    const hasMetadata =
+      metadata.jsonLd.length > 0 ||
+      Object.keys(metadata.openGraph).length > 0 ||
+      Object.keys(metadata.twitterCard).length > 0 ||
+      metadata.microdata.length > 0;
+    if (hasMetadata) {
+      structuredMetadata = metadata;
+    }
+
+    let tables: ExtractedTable[] | undefined;
+    const extractedTables = tableExtractor.extract(freshDoc);
+    if (extractedTables.length > 0) {
+      tables = extractedTables;
+    }
+
+    return { structuredMetadata, tables };
+  } catch (error) {
+    logger.warn('Structured extraction failed', {
+      url: baseUrl,
+      error: error instanceof Error ? error.message : 'unknown'
+    });
+    return {};
+  }
+};
+
+/**
+ * Marketplace adapter dispatch list.
+ * Each entry provides a URL check and extraction function.
+ * Add new marketplace adapters here — no other changes needed in the distiller.
+ */
+interface MarketplaceDispatch {
+  name: string;
+  canHandle: (url: string) => boolean;
+  extract: (
+    html: string,
+    processedHtml: string,
+    url: string,
+    contentHash: string,
+    policyMetadata?: DistillationResult['policyMetadata']
+  ) => DistillationResult | null;
+}
+
+const formatCurrency = (amount: number, currency: string): string => {
+  switch (currency) {
+    case 'GBP': return `£${amount.toFixed(2)}`;
+    case 'EUR': return `€${amount.toFixed(2)}`;
+    default: return `$${amount.toFixed(2)}`;
+  }
+};
+
+const marketplaceAdapters: MarketplaceDispatch[] = [
+  {
+    name: 'ebay-search',
+    canHandle: (url) => ebaySearchAdapter.isSoldSearch(url),
+    extract: (html, processedHtml, url, contentHash, policyMetadata) => {
+      const extraction = ebaySearchAdapter.extractLegacy(processedHtml, url);
+      if (extraction.extractedCount === 0) return null;
+
+      const lines: string[] = [];
+      extraction.items.forEach((item, index) => {
+        lines.push(`Title: ${item.title}`);
+        lines.push(`Price: ${formatCurrency(item.price ?? 0, item.currency)}`);
+        if (item.soldDate) lines.push(`Sold Date: ${item.soldDate}`);
+        if (item.condition) lines.push(`Condition: ${item.condition}`);
+        if (item.shippingText) {
+          lines.push(`Shipping: ${item.shippingText}`);
+        } else if (item.shippingCost !== null) {
+          lines.push(`Shipping: ${item.shippingCost === 0 ? 'Free shipping' : `Shipping Cost: ${formatCurrency(item.shippingCost, item.currency)}`}`);
+        }
+        if (item.url) lines.push(`Listing URL: ${item.url}`);
+        if (index < extraction.items.length - 1) lines.push('---');
+      });
+
+      const contentText = lines.join('\n');
+      const nodes: DistilledNode[] = lines.map((text, index) => ({
+        id: `ebay-search-${index}`,
+        order: index,
+        type: text.startsWith('Title:') ? 'heading' as const : 'paragraph' as const,
+        text
+      }));
+
+      const { structuredMetadata, tables } = extractStructuredData(html, url);
+
+      return {
+        title: `eBay Sold Listings (${extraction.extractedCount} items)`,
+        byline: null, excerpt: lines.slice(0, 3).join(' | '), lang: null, siteName: 'eBay',
+        contentText, contentLength: contentText.length, contentHash, nodes,
+        fallbackUsed: false,
+        extractionMethod: 'ebay-search-adapter' as const,
+        extractionConfidence: extraction.confidence,
+        ebaySearchData: extraction,
+        policyMetadata,
+        structuredMetadata,
+        tables,
+      };
+    },
+  },
+  {
+    name: 'ebay-listing',
+    canHandle: (url) => ebayAdapter.isEbayListing(url),
+    extract: (html, _processedHtml, url, contentHash, policyMetadata) => {
+      const ebayData = ebayAdapter.extractLegacy(html, url);
+
+      const contentLines = [
+        `Title: ${ebayData.title}`,
+        ebayData.soldPrice !== null ? `Sold Price: ${ebayData.currency} ${ebayData.soldPrice.toFixed(2)}` : 'Sold Price: Not found',
+        ebayData.soldDate ? `Sold Date: ${ebayData.soldDate}` : 'Sold Date: Not found',
+        ebayData.condition ? `Condition: ${ebayData.condition}` : 'Condition: Not found',
+        ebayData.itemNumber ? `Item Number: ${ebayData.itemNumber}` : 'Item Number: Not found',
+        ebayData.shippingCost !== null ? `Shipping: ${ebayData.currency} ${ebayData.shippingCost.toFixed(2)}` : 'Shipping: Not found',
+        ebayData.seller.name ? `Seller: ${ebayData.seller.name}` : 'Seller: Not found',
+        ebayData.seller.rating !== null ? `Seller Rating: ${ebayData.seller.rating}%` : ''
+      ].filter(line => line.length > 0);
+
+      const contentText = contentLines.join('\n');
+      const nodes: DistilledNode[] = contentLines.map((line, index) => ({
+        id: `ebay-field-${index}`,
+        order: index,
+        type: 'paragraph' as const,
+        text: line,
+        sourceSpans: [createSourceSpan(url, html, line, contentHash)]
+      }));
+
+      const { structuredMetadata, tables } = extractStructuredData(html, url);
+
+      return {
+        title: ebayData.title,
+        byline: ebayData.seller.name, excerpt: contentLines.slice(0, 3).join(' | '),
+        lang: null, siteName: 'eBay',
+        contentText, contentLength: contentText.length, contentHash, nodes,
+        fallbackUsed: false,
+        extractionMethod: 'ebay-adapter' as const,
+        extractionConfidence: ebayData.confidence,
+        ebayData,
+        policyMetadata,
+        structuredMetadata,
+        tables,
+      };
+    },
+  },
+];
 
 export interface SourceSpan {
   url: string;
@@ -62,6 +221,8 @@ export interface DistillationResult {
     rulesMatched: number;
     fieldsValidated: boolean;
   };
+  structuredMetadata?: StructuredMetadata;
+  tables?: ExtractedTable[];
 }
 
 const toParagraphNodes = (document: Document): DistilledNode[] => {
@@ -196,143 +357,20 @@ export const distillContent = async (html: string, baseUrl: string, policyHint?:
     });
   }
 
-  // Check if this is an eBay sold search page
-  if (ebaySearchAdapter.isSoldSearch(baseUrl)) {
-    logger.info('eBay sold search detected, using search adapter', { url: baseUrl });
+  // Check marketplace adapters (eBay, Amazon, Walmart, etc.)
+  // New marketplace adapters should be added to the marketplaceAdapters array above.
+  const policyMeta = policyResult
+    ? { policyApplied: policyResult.policyApplied, rulesMatched: policyResult.rulesMatched, fieldsValidated: policyResult.fieldsValidated }
+    : undefined;
 
-    const extraction = ebaySearchAdapter.extractLegacy(processedHtml, baseUrl);
+  for (const adapter of marketplaceAdapters) {
+    if (!adapter.canHandle(baseUrl)) continue;
 
-    if (extraction.extractedCount > 0) {
-      const lines: string[] = [];
+    logger.info(`Marketplace adapter matched: ${adapter.name}`, { url: baseUrl });
+    const result = adapter.extract(html, processedHtml, baseUrl, contentHash, policyMeta);
+    if (result) return result;
 
-      const formatCurrency = (amount: number, currency: string): string => {
-        switch (currency) {
-          case 'GBP':
-            return `£${amount.toFixed(2)}`;
-          case 'EUR':
-            return `€${amount.toFixed(2)}`;
-          default:
-            return `$${amount.toFixed(2)}`;
-        }
-      };
-
-      extraction.items.forEach((item, index) => {
-        lines.push(`Title: ${item.title}`);
-        lines.push(`Price: ${formatCurrency(item.price ?? 0, item.currency)}`);
-        if (item.soldDate) {
-          lines.push(`Sold Date: ${item.soldDate}`);
-        }
-        if (item.condition) {
-          lines.push(`Condition: ${item.condition}`);
-        }
-        if (item.shippingText) {
-          lines.push(`Shipping: ${item.shippingText}`);
-        } else if (item.shippingCost !== null) {
-          const shippingLabel =
-            item.shippingCost === 0
-              ? 'Free shipping'
-              : `Shipping Cost: ${formatCurrency(item.shippingCost, item.currency)}`;
-          lines.push(`Shipping: ${shippingLabel}`);
-        }
-        if (item.url) {
-          lines.push(`Listing URL: ${item.url}`);
-        }
-
-        if (index < extraction.items.length - 1) {
-          lines.push('---');
-        }
-      });
-
-      const contentText = lines.join('\n');
-
-      const nodes: DistilledNode[] = lines.map((text, index) => ({
-        id: `ebay-search-${index}`,
-        order: index,
-        type: text.startsWith('Title:') ? 'heading' : 'paragraph',
-        text
-      }));
-
-      return {
-        title: `eBay Sold Listings (${extraction.extractedCount} items)`,
-        byline: null,
-        excerpt: lines.slice(0, 3).join(' | '),
-        lang: null,
-        siteName: 'eBay',
-        contentText,
-        contentLength: contentText.length,
-        contentHash,
-        nodes,
-        fallbackUsed: false,
-        extractionMethod: 'ebay-search-adapter',
-        extractionConfidence: extraction.confidence,
-        ebaySearchData: extraction,
-        policyMetadata: policyResult
-          ? {
-              policyApplied: policyResult.policyApplied,
-              rulesMatched: policyResult.rulesMatched,
-              fieldsValidated: policyResult.fieldsValidated
-            }
-          : undefined
-      };
-    }
-
-    logger.warn('eBay search adapter found zero extractable items, falling back to generic extraction', {
-      url: baseUrl,
-      detectedCount: extraction.detectedCount
-    });
-  }
-
-  // Check if this is an eBay listing - use specialized adapter
-  if (ebayAdapter.isEbayListing(baseUrl)) {
-    logger.info('eBay listing detected, using eBay adapter', { url: baseUrl });
-
-    // Use legacy extraction method for backward compatibility
-    const ebayData = ebayAdapter.extractLegacy(html, baseUrl);
-
-    // Convert eBay data to DistillationResult format
-    const contentLines = [
-      `Title: ${ebayData.title}`,
-      ebayData.soldPrice !== null ? `Sold Price: ${ebayData.currency} ${ebayData.soldPrice.toFixed(2)}` : 'Sold Price: Not found',
-      ebayData.soldDate ? `Sold Date: ${ebayData.soldDate}` : 'Sold Date: Not found',
-      ebayData.condition ? `Condition: ${ebayData.condition}` : 'Condition: Not found',
-      ebayData.itemNumber ? `Item Number: ${ebayData.itemNumber}` : 'Item Number: Not found',
-      ebayData.shippingCost !== null ? `Shipping: ${ebayData.currency} ${ebayData.shippingCost.toFixed(2)}` : 'Shipping: Not found',
-      ebayData.seller.name ? `Seller: ${ebayData.seller.name}` : 'Seller: Not found',
-      ebayData.seller.rating !== null ? `Seller Rating: ${ebayData.seller.rating}%` : ''
-    ].filter(line => line.length > 0);
-
-    const contentText = contentLines.join('\n');
-
-    const nodes: DistilledNode[] = contentLines.map((line, index) => ({
-      id: `ebay-field-${index}`,
-      order: index,
-      type: 'paragraph' as const,
-      text: line,
-      sourceSpans: [createSourceSpan(baseUrl, html, line, contentHash)]
-    }));
-
-    return {
-      title: ebayData.title,
-      byline: ebayData.seller.name,
-      excerpt: contentLines.slice(0, 3).join(' | '),
-      lang: null,
-      siteName: 'eBay',
-      contentText,
-      contentLength: contentText.length,
-      contentHash,
-      nodes,
-      fallbackUsed: false,
-      extractionMethod: 'ebay-adapter',
-      extractionConfidence: ebayData.confidence,
-      ebayData,
-      policyMetadata: policyResult
-        ? {
-            policyApplied: policyResult.policyApplied,
-            rulesMatched: policyResult.rulesMatched,
-            fieldsValidated: policyResult.fieldsValidated
-          }
-        : undefined
-    };
+    logger.warn(`Marketplace adapter ${adapter.name} returned null, falling back to generic extraction`, { url: baseUrl });
   }
 
   // Collect extraction candidates (using policy-processed HTML)
@@ -564,6 +602,9 @@ export const distillContent = async (html: string, baseUrl: string, policyHint?:
     }
   });
 
+  // Extract structured metadata and tables from a fresh DOM (Readability mutates)
+  const { structuredMetadata, tables } = extractStructuredData(html, baseUrl);
+
   return {
     title: best.title,
     byline,
@@ -587,6 +628,8 @@ export const distillContent = async (html: string, baseUrl: string, policyHint?:
           rulesMatched: policyResult.rulesMatched,
           fieldsValidated: policyResult.fieldsValidated
         }
-      : undefined
+      : undefined,
+    structuredMetadata,
+    tables
   };
 };

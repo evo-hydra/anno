@@ -25,6 +25,8 @@ import {
   ValidationResult,
   CHANNEL_CONFIDENCE_DEFAULTS,
 } from './marketplace-adapter';
+import { crossValidate } from './structured-data-enrichment';
+import { structuredMetadataExtractor } from './structured-metadata-extractor';
 
 export interface EbaySoldListing {
   title: string;
@@ -120,13 +122,45 @@ export class EbayAdapter implements DataSourceAdapter {
     const imageUrl = this.extractImage(document);
 
     // Calculate confidence
-    const confidence = this.calculateConfidence({
+    let confidence = this.calculateConfidence({
       hasTitle: !!title,
       hasPrice: price !== null,
       hasSoldDate: !!soldDate,
       hasCondition: !!condition,
       hasItemNumber: !!itemNumber
     });
+
+    // Cross-validate against structured data (JSON-LD) for confidence boost
+    try {
+      const metadata = structuredMetadataExtractor.extract(document);
+      if (metadata.jsonLd.length > 0) {
+        const tempListing: MarketplaceListing = {
+          id: itemNumber || '',
+          marketplace: 'ebay',
+          url,
+          title,
+          price: price !== null ? { amount: price, currency } : null,
+          availability: 'sold',
+          seller: { name: seller.name },
+          images: [],
+          extractedAt: new Date().toISOString(),
+          extractionMethod: 'ebay-adapter',
+          confidence,
+          extractorVersion: this.version,
+        };
+        const enrichment = crossValidate(tempListing, metadata);
+        if (enrichment.confidenceAdjustment > 0) {
+          confidence = Math.min(confidence + enrichment.confidenceAdjustment, 1);
+          logger.debug('eBay structured data cross-validation boosted confidence', {
+            url,
+            validatedFields: enrichment.validatedFields,
+            adjustment: enrichment.confidenceAdjustment,
+          });
+        }
+      }
+    } catch {
+      // Cross-validation is best-effort — don't fail extraction
+    }
 
     return {
       title,

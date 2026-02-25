@@ -21,14 +21,18 @@ export interface PipelineOptions {
   mode: FetchMode;
 }
 
+export type StreamEventPayload = Record<string, unknown>;
+
 export type StreamEvent =
-  | { type: 'metadata'; payload: Record<string, unknown> }
-  | { type: 'node'; payload: Record<string, unknown> }
-  | { type: 'provenance'; payload: Record<string, unknown> }
-  | { type: 'confidence'; payload: Record<string, unknown> }
-  | { type: 'extraction'; payload: Record<string, unknown> }
-  | { type: 'alert'; payload: Record<string, unknown> }
-  | { type: 'done'; payload: Record<string, unknown> };
+  | { type: 'metadata'; payload: StreamEventPayload }
+  | { type: 'node'; payload: StreamEventPayload }
+  | { type: 'provenance'; payload: StreamEventPayload }
+  | { type: 'confidence'; payload: StreamEventPayload }
+  | { type: 'extraction'; payload: StreamEventPayload }
+  | { type: 'structured'; payload: StreamEventPayload }
+  | { type: 'tables'; payload: StreamEventPayload }
+  | { type: 'alert'; payload: StreamEventPayload }
+  | { type: 'done'; payload: StreamEventPayload };
 
 const clamp = (value: number, min: number, max: number): number => Math.min(Math.max(value, min), max);
 
@@ -195,6 +199,20 @@ export async function* runPipeline(options: PipelineOptions): AsyncGenerator<Str
       ebaySearch: distillation.ebaySearchData ?? undefined
     }
   } satisfies StreamEvent;
+
+  if (distillation.structuredMetadata) {
+    yield {
+      type: 'structured',
+      payload: { ...distillation.structuredMetadata }
+    } satisfies StreamEvent;
+  }
+
+  if (distillation.tables && distillation.tables.length > 0) {
+    yield {
+      type: 'tables',
+      payload: { tables: distillation.tables }
+    } satisfies StreamEvent;
+  }
 
   const limitedNodes = distillation.nodes.slice(0, options.maxNodes);
 
