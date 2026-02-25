@@ -68,6 +68,8 @@ COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 
 # Copy necessary runtime files
 COPY --chown=nodejs:nodejs .env.example ./.env.example
+COPY --chown=nodejs:nodejs policies ./policies
+COPY --chown=nodejs:nodejs config ./config
 
 # Create cache directory with proper permissions
 RUN mkdir -p /app/.cache && chown -R nodejs:nodejs /app/.cache

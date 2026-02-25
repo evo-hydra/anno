@@ -1,6 +1,6 @@
 {
   "name": "@evointel/anno",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Web content extraction for AI agents — ensemble extraction with confidence scoring, 93% token reduction vs raw HTML",
   "private": false,
   "engines": {
@@ -52,7 +52,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/evointel/anno"
+    "url": "https://github.com/evo-hydra/anno"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.75.0",

@@ -1,0 +1,60 @@
+version: '3.9'
+
+services:
+  anno:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: runner
+    container_name: anno_prod
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    ports:
+      - "127.0.0.1:5213:5213"
+    volumes:
+      - anno-cache:/app/.cache
+    networks:
+      - anno-net
+    depends_on:
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 1G
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: anno_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis-data:/data
+    networks:
+      - anno-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  anno-cache:
+  redis-data:
+
+networks:
+  anno-net:
+    driver: bridge
