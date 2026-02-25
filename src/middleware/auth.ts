@@ -12,6 +12,7 @@ import { createHash } from 'crypto';
 import { config } from '../config/env';
 import { AppError, ErrorCode } from './error-handler';
 import { logger } from '../utils/logger';
+import { getKeyStore } from '../services/key-store';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -112,28 +113,43 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
   }
 
   const keyHash = hashApiKey(key);
-  const isValid = config.auth.apiKeys.some(configuredKey => {
+  const tier = detectTier(key);
+
+  // Check env var keys first (fast, synchronous)
+  const isEnvValid = config.auth.apiKeys.some(configuredKey => {
     const configuredHash = hashApiKey(configuredKey);
     return keyHash === configuredHash;
   });
 
-  if (!isValid) {
-    logger.warn('Invalid API key attempt', { keyHashPrefix: keyHash.slice(0, 8) });
-    next(new AppError(
-      ErrorCode.UNAUTHORIZED,
-      'Invalid API key.',
-      401
-    ));
+  if (isEnvValid) {
+    req.tenant = { id: keyHash, authenticated: true, tier };
+    next();
     return;
   }
 
-  req.tenant = {
-    id: keyHash,
-    authenticated: true,
-    tier: detectTier(key),
-  };
+  // Check Redis key store (async, for dynamically provisioned keys)
+  const keyStore = getKeyStore();
+  if (!keyStore.isReady()) {
+    // Redis unavailable — only env var keys work
+    logger.warn('Invalid API key attempt', { keyHashPrefix: keyHash.slice(0, 8) });
+    next(new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key.', 401));
+    return;
+  }
 
-  next();
+  keyStore.lookup(keyHash)
+    .then((stored) => {
+      if (stored) {
+        req.tenant = { id: keyHash, authenticated: true, tier: stored.tier };
+        next();
+      } else {
+        logger.warn('Invalid API key attempt', { keyHashPrefix: keyHash.slice(0, 8) });
+        next(new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key.', 401));
+      }
+    })
+    .catch((err) => {
+      logger.error('KeyStore lookup failed, rejecting key', { error: (err as Error).message });
+      next(new AppError(ErrorCode.UNAUTHORIZED, 'Invalid API key.', 401));
+    });
 }
 
 // Re-export types and helpers used by existing server.ts imports

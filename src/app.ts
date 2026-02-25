@@ -36,6 +36,7 @@ import { createRateLimitMiddleware, getRateLimitConfigFromEnv } from './middlewa
 import { createAuditLogMiddleware, getAuditConfigFromEnv } from './middleware/audit-log';
 import { rateLimitPerTenantMiddleware } from './middleware/rate-limit-per-tenant';
 import { quotaMiddleware } from './middleware/quota';
+import { adminRouter } from './api/routes/admin';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import {
   createSecurityHeadersMiddleware,
@@ -146,6 +147,12 @@ export function createApp(): express.Express {
   if (rateLimitConfig.enabled) {
     app.use('/v1', createRateLimitMiddleware(rateLimitConfig));
     logger.info(`⏱️  Rate limiting enabled: ${rateLimitConfig.maxRequests} requests per ${rateLimitConfig.windowMs}ms`);
+  }
+
+  // Admin routes (own auth — not behind /v1 auth middleware)
+  app.use('/admin', adminRouter);
+  if (config.auth.adminKey) {
+    logger.info('Admin API enabled at /admin');
   }
 
   // API routes

@@ -17,6 +17,7 @@ import { initRenderer, shutdownRenderer } from './services/renderer';
 import { watchManager } from './services/watch-manager';
 import { getJobQueue } from './services/job-queue';
 import { getQuotaStore } from './services/quota-store';
+import { getKeyStore } from './services/key-store';
 
 const app = createApp();
 
@@ -40,6 +41,11 @@ const server = app.listen(config.port, async () => {
   // Initialize watch manager (loads persisted watches and starts timer)
   await watchManager.init().catch((err: Error) => {
     logger.error('watch manager init failed', { error: err.message });
+  });
+
+  // Initialize key store (Redis-backed dynamic API key provisioning)
+  await getKeyStore().init().catch((err: Error) => {
+    logger.error('key store init failed, only env var keys will work', { error: err.message });
   });
 
   // Initialize quota store (Redis-backed monthly usage tracking)
@@ -121,6 +127,11 @@ const shutdown = async () => {
 
   await shutdownRenderer().catch((error: Error) => {
     logger.error('renderer shutdown failed', { error: error.message });
+  });
+
+  // Close key store Redis connection
+  await getKeyStore().shutdown().catch((error: Error) => {
+    logger.error('key store shutdown failed', { error: error.message });
   });
 
   // Close quota store Redis connection

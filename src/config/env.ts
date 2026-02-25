@@ -57,6 +57,7 @@ export interface AppConfig {
     apiKeys: string[];
     rateLimitPerKey: number;
     bypassInDev: boolean;
+    adminKey?: string;
   };
   quota: {
     enabled: boolean;
@@ -167,6 +168,7 @@ export const config: AppConfig = {
     apiKeys: (process.env.ANNO_API_KEYS ?? '').split(',').map(s => s.trim()).filter(Boolean),
     rateLimitPerKey: numberFromEnv(process.env.ANNO_RATE_LIMIT_PER_KEY, 60),
     bypassInDev: booleanFromEnv(process.env.ANNO_AUTH_BYPASS_DEV, true),
+    adminKey: process.env.ANNO_ADMIN_KEY || undefined,
   },
   quota: {
     enabled: booleanFromEnv(process.env.ANNO_QUOTA_ENABLED, true),
