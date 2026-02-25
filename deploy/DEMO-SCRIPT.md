@@ -31,7 +31,7 @@ CHANGE_ME_GENERATE_WITH_openssl_rand_hex_32
 
 ### The Problem, Quantified (30 seconds)
 
-> "A single page from CNN is 4.9 megabytes of HTML. The actual content your agent needs? About 18 kilobytes. That's a **99.6% waste rate.** Multiply that by thousands of agent calls per day, and you're burning real money — companies spend 100x what they should on API costs because no one solved the extraction problem properly."
+> "A single page from CNN is 4.9 megabytes of HTML. The actual content your agent needs? About 18 kilobytes. We benchmarked this across 22 real-world sites — news, e-commerce, docs, Wikipedia, GitHub — and the **median reduction is 97%.** On heavy pages like CNN it's 99.6%. That means companies are paying 30-100x what they should on API costs just because no one solved the extraction problem properly."
 
 ### The Solution (30 seconds)
 
@@ -63,7 +63,7 @@ curl -s -X POST https://anno.evolvingintelligence.ai/v1/content/fetch \
   -d '{"url": "https://www.cnn.com"}' | head -5
 ```
 
-> "Same page. 4.9 megabytes becomes 18 kilobytes. And look at the third line — Anno also extracted CNN's JSON-LD schema: it knows this is a NewsMediaOrganization, it pulled the publisher name, the social links, the search action URL. Your agent gets structured intelligence, not a wall of HTML."
+> "Same page. 4.9 megabytes becomes 18 kilobytes — 99.6% reduction. And that's not an outlier — across 22 sites we tested, the median is 97%. But look at the fourth line — Anno also extracted CNN's JSON-LD schema: it knows this is a NewsMediaOrganization, it pulled the publisher name, the social links, the search action URL. Your agent gets structured intelligence, not a wall of HTML."
 
 **What to point at:** The `structured` event in the NDJSON output showing `@type: WebPage`, `publisher.name: CNN`, and the Open Graph metadata.
 
