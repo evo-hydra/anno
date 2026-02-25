@@ -16,6 +16,7 @@ import { createApp } from './app';
 import { initRenderer, shutdownRenderer } from './services/renderer';
 import { watchManager } from './services/watch-manager';
 import { getJobQueue } from './services/job-queue';
+import { getQuotaStore } from './services/quota-store';
 
 const app = createApp();
 
@@ -39,6 +40,11 @@ const server = app.listen(config.port, async () => {
   // Initialize watch manager (loads persisted watches and starts timer)
   await watchManager.init().catch((err: Error) => {
     logger.error('watch manager init failed', { error: err.message });
+  });
+
+  // Initialize quota store (Redis-backed monthly usage tracking)
+  await getQuotaStore().init().catch((err: Error) => {
+    logger.error('quota store init failed, using in-memory fallback', { error: err.message });
   });
 
   // Initialize and start job queue worker
@@ -115,6 +121,11 @@ const shutdown = async () => {
 
   await shutdownRenderer().catch((error: Error) => {
     logger.error('renderer shutdown failed', { error: error.message });
+  });
+
+  // Close quota store Redis connection
+  await getQuotaStore().shutdown().catch((error: Error) => {
+    logger.error('quota store shutdown failed', { error: error.message });
   });
 
   // Close cache/Redis connections

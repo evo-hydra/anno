@@ -5,9 +5,11 @@ import { rateLimitPerTenantMiddleware, resetTenantWindows } from '../middleware/
 import { ErrorCode } from '../middleware/error-handler';
 
 let originalAuth: typeof config.auth;
+let originalQuota: typeof config.quota;
 
 beforeEach(() => {
   originalAuth = { ...config.auth, apiKeys: [...config.auth.apiKeys] };
+  originalQuota = JSON.parse(JSON.stringify(config.quota));
   resetTenantWindows();
 });
 
@@ -16,14 +18,15 @@ afterEach(() => {
   config.auth.apiKeys = originalAuth.apiKeys;
   config.auth.rateLimitPerKey = originalAuth.rateLimitPerKey;
   config.auth.bypassInDev = originalAuth.bypassInDev;
+  config.quota = originalQuota;
   vi.useRealTimers();
 });
 
-function createMockReq(tenantId?: string): Request {
+function createMockReq(tenantId?: string, tier = 'free'): Request {
   const req = {
     headers: {},
     get: (name: string) => req.headers[name.toLowerCase()],
-    tenant: tenantId ? { id: tenantId, authenticated: true } : undefined,
+    tenant: tenantId ? { id: tenantId, authenticated: true, tier } : undefined,
   } as unknown as Request;
   return req;
 }
@@ -41,6 +44,7 @@ describe('rateLimitPerTenantMiddleware', () => {
   it('allows requests under the limit', () => {
     config.auth.enabled = true;
     config.auth.rateLimitPerKey = 5;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 5 };
 
     const _req = createMockReq('tenant-a');
     const _res = createMockRes();
@@ -59,6 +63,7 @@ describe('rateLimitPerTenantMiddleware', () => {
   it('blocks requests over the limit with 429', () => {
     config.auth.enabled = true;
     config.auth.rateLimitPerKey = 3;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 3 };
 
     // Make 3 requests (at the limit)
     for (let i = 0; i < 3; i++) {
@@ -87,6 +92,7 @@ describe('rateLimitPerTenantMiddleware', () => {
   it('tracks limits per tenant independently', () => {
     config.auth.enabled = true;
     config.auth.rateLimitPerKey = 2;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 2 };
 
     // Tenant A: make 2 requests
     for (let i = 0; i < 2; i++) {
@@ -120,6 +126,7 @@ describe('rateLimitPerTenantMiddleware', () => {
     vi.useFakeTimers();
     config.auth.enabled = true;
     config.auth.rateLimitPerKey = 2;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 2 };
 
     // Make 2 requests (at the limit)
     for (let i = 0; i < 2; i++) {
@@ -155,6 +162,7 @@ describe('rateLimitPerTenantMiddleware', () => {
   it('skips when auth is disabled', () => {
     config.auth.enabled = false;
     config.auth.rateLimitPerKey = 1;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 1 };
 
     // Even though limit is 1, auth is disabled so rate limiting should be skipped
     for (let i = 0; i < 10; i++) {
@@ -169,6 +177,7 @@ describe('rateLimitPerTenantMiddleware', () => {
   it('skips when no tenant is attached', () => {
     config.auth.enabled = true;
     config.auth.rateLimitPerKey = 1;
+    config.quota.tiers.free = { monthlyLimit: 200, burstPerMinute: 1 };
 
     // Request without tenant should pass through
     const req = createMockReq(); // no tenant ID

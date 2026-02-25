@@ -35,6 +35,7 @@ import { createAuthMiddleware, extractApiKeyMiddleware, getAuthConfigFromEnv } f
 import { createRateLimitMiddleware, getRateLimitConfigFromEnv } from './middleware/rate-limit';
 import { createAuditLogMiddleware, getAuditConfigFromEnv } from './middleware/audit-log';
 import { rateLimitPerTenantMiddleware } from './middleware/rate-limit-per-tenant';
+import { quotaMiddleware } from './middleware/quota';
 import { errorHandler, notFoundHandler } from './middleware/error-handler';
 import {
   createSecurityHeadersMiddleware,
@@ -127,10 +128,18 @@ export function createApp(): express.Express {
     logger.info('🔓 API authentication disabled (dev mode)');
   }
 
-  // Apply per-tenant rate limiting middleware (after auth so tenant is attached)
+  // Apply monthly quota enforcement (after auth so tenant.tier is known)
+  if (config.quota.enabled && config.auth.enabled) {
+    app.use('/v1', quotaMiddleware);
+    logger.info('Monthly quota enforcement enabled', {
+      tiers: Object.entries(config.quota.tiers).map(([name, t]) => `${name}:${t.monthlyLimit}/mo`).join(', ')
+    });
+  }
+
+  // Apply per-tenant burst rate limiting (now tier-aware)
   app.use('/v1', rateLimitPerTenantMiddleware);
   if (config.auth.enabled) {
-    logger.info('Per-tenant rate limiting enabled', { rateLimitPerKey: config.auth.rateLimitPerKey });
+    logger.info('Per-tenant burst rate limiting enabled (tier-aware)');
   }
 
   // Apply global rate limiting middleware

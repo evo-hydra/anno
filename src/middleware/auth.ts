@@ -20,12 +20,24 @@ declare global {
       tenant?: {
         id: string;
         authenticated: boolean;
+        tier: string;
       };
     }
   }
 }
 
 const DEFAULT_TENANT_ID = 'default';
+
+/**
+ * Detect tier from raw API key prefix before hashing.
+ * Keys use prefixes: anno_free_, anno_pro_, anno_biz_
+ * Unknown prefixes default to 'free' (most restrictive).
+ */
+function detectTier(rawKey: string): string {
+  if (rawKey.startsWith('anno_pro_')) return 'pro';
+  if (rawKey.startsWith('anno_biz_')) return 'business';
+  return 'free';
+}
 
 /**
  * Hash an API key to produce a tenant ID.
@@ -60,6 +72,7 @@ function attachDefaultTenant(req: Request): void {
   req.tenant = {
     id: DEFAULT_TENANT_ID,
     authenticated: false,
+    tier: 'free',
   };
 }
 
@@ -117,6 +130,7 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
   req.tenant = {
     id: keyHash,
     authenticated: true,
+    tier: detectTier(key),
   };
 
   next();

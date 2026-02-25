@@ -58,6 +58,10 @@ export interface AppConfig {
     rateLimitPerKey: number;
     bypassInDev: boolean;
   };
+  quota: {
+    enabled: boolean;
+    tiers: Record<string, { monthlyLimit: number; burstPerMinute: number }>;
+  };
 }
 
 const numberFromEnv = (value: string | undefined, fallback: number): number => {
@@ -163,5 +167,22 @@ export const config: AppConfig = {
     apiKeys: (process.env.ANNO_API_KEYS ?? '').split(',').map(s => s.trim()).filter(Boolean),
     rateLimitPerKey: numberFromEnv(process.env.ANNO_RATE_LIMIT_PER_KEY, 60),
     bypassInDev: booleanFromEnv(process.env.ANNO_AUTH_BYPASS_DEV, true),
-  }
+  },
+  quota: {
+    enabled: booleanFromEnv(process.env.ANNO_QUOTA_ENABLED, true),
+    tiers: {
+      free: {
+        monthlyLimit: numberFromEnv(process.env.ANNO_QUOTA_FREE_MONTHLY, 200),
+        burstPerMinute: numberFromEnv(process.env.ANNO_BURST_FREE_PER_MIN, 5),
+      },
+      pro: {
+        monthlyLimit: numberFromEnv(process.env.ANNO_QUOTA_PRO_MONTHLY, 10_000),
+        burstPerMinute: numberFromEnv(process.env.ANNO_BURST_PRO_PER_MIN, 60),
+      },
+      business: {
+        monthlyLimit: numberFromEnv(process.env.ANNO_QUOTA_BIZ_MONTHLY, 50_000),
+        burstPerMinute: numberFromEnv(process.env.ANNO_BURST_BIZ_PER_MIN, 200),
+      },
+    },
+  },
 };

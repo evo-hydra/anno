@@ -53,7 +53,9 @@ export function rateLimitPerTenantMiddleware(req: Request, res: Response, next: 
   }
 
   const now = Date.now();
-  const limit = config.auth.rateLimitPerKey;
+  const tier = req.tenant?.tier ?? 'free';
+  const tierConfig = config.quota.tiers[tier];
+  const limit = tierConfig?.burstPerMinute ?? config.auth.rateLimitPerKey;
 
   let entry = tenantWindows.get(tenantId);
   if (!entry) {

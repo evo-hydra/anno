@@ -60,6 +60,7 @@ describe('authMiddleware', () => {
     expect(req.tenant).toEqual({
       id: 'default',
       authenticated: false,
+      tier: 'free',
     });
   });
 
@@ -79,6 +80,7 @@ describe('authMiddleware', () => {
     expect(req.tenant).toEqual({
       id: 'default',
       authenticated: false,
+      tier: 'free',
     });
   });
 
@@ -174,6 +176,7 @@ describe('authMiddleware', () => {
     expect(req.tenant).toEqual({
       id: hashApiKey('my-secret-key'),
       authenticated: true,
+      tier: 'free',
     });
     // Ensure the tenant ID is a hex hash, not the raw key
     expect(req.tenant!.id).toMatch(/^[a-f0-9]{64}$/);
