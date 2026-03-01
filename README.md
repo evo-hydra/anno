@@ -163,6 +163,20 @@ npm test         # Lint + Vitest (1,958 tests)
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for system design.
 
+## Part of the EvoIntel MCP Suite
+
+Anno solves **AI Blindness #5: Web Content** — documentation, changelogs, and API references buried under 93% HTML noise that wastes your token budget.
+
+Part of the [EvoIntel MCP Suite](https://evolvingintelligence.ai) by Evolving Intelligence AI: five tools for five blindnesses no model improvement will ever fix.
+
+| Tool | Blindness | Install |
+|------|-----------|---------|
+| [Sentinel](https://github.com/evo-hydra/sentinel) | Project History | `pip install git-sentinel` |
+| [Niobe](https://github.com/evo-hydra/niobe) | Runtime Behavior | `pip install niobe` |
+| [Merovingian](https://github.com/evo-hydra/merovingian) | Cross-Service Dependencies | `pip install merovingian` |
+| [Seraph](https://github.com/evo-hydra/seraph) | Code Quality | `pip install seraph-ai` |
+| **Anno** | Web Content | `npm install -g @evointel/anno` |
+
 ## License
 
 [MIT](LICENSE) — Evolving Intelligence AI
