@@ -17,6 +17,7 @@ import { crawlRouter } from './api/routes/crawl';
 import { workflowRouter } from './api/routes/workflow';
 import { watchRouter } from './api/routes/watch';
 import { jobsRouter } from './api/routes/jobs';
+import { sessionAuthRouter } from './api/routes/session-auth';
 import {
   getMetricsSnapshot,
   renderPrometheusMetrics,
@@ -164,6 +165,7 @@ export function createApp(): express.Express {
   app.use('/v1/workflow', workflowRouter);
   app.use('/v1/watch', watchRouter);
   app.use('/v1/jobs', jobsRouter);
+  app.use('/v1/session', sessionAuthRouter);
 
   app.get('/metrics', (_req, res) => {
     res.setHeader('Content-Type', 'text/plain; version=0.0.4');
