@@ -16,6 +16,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
+import { extractErrorMessage } from '../utils/error.js';
 
 const ANNO_BASE_URL = process.env.ANNO_BASE_URL || 'http://localhost:5213';
 
@@ -125,7 +126,7 @@ WebFetch only if Anno server is unreachable.`,
 
       return { content: [{ type: 'text' as const, text }] };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = extractErrorMessage(error);
       if (message.includes('ECONNREFUSED')) {
         return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
       }
@@ -186,7 +187,7 @@ text than calling WebFetch repeatedly.`,
 
       return { content: [{ type: 'text' as const, text: parts.join('\n').trim() }] };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = extractErrorMessage(error);
       if (message.includes('ECONNREFUSED')) {
         return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
       }
@@ -268,7 +269,7 @@ content gathering — far more efficient than fetching pages individually.`,
 
       return { content: [{ type: 'text' as const, text: `Crawl timed out after ${maxWaitMs / 1000}s. Job ID: ${jobId} — poll GET /v1/crawl/${jobId} for status.` }] };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = extractErrorMessage(error);
       if (message.includes('ECONNREFUSED')) {
         return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
       }
@@ -292,8 +293,60 @@ server.tool(
       const body = await res.json();
       return { content: [{ type: 'text' as const, text: `Anno is healthy: ${JSON.stringify(body, null, 2)}` }] };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
+      const message = extractErrorMessage(error);
       return { content: [{ type: 'text' as const, text: `Anno is not reachable at ${ANNO_BASE_URL}: ${message}` }] };
+    }
+  },
+);
+
+// --- Tool: anno_session_auth ------------------------------------------------
+
+server.tool(
+  'anno_session_auth',
+  `Authenticate with Cloudflare-protected sites by navigating with a real
+browser (Playwright + stealth). Injects seed cookies (e.g., sessionKey),
+lets the browser solve Cloudflare challenges, and returns the full cookie
+jar including cf_clearance. Use this to obtain cookies for APIs behind
+Cloudflare bot protection.`,
+  {
+    domain: z.string().min(1).describe('Target domain (e.g., "claude.ai")'),
+    url: z.string().url().describe('URL to navigate to for cookie resolution'),
+    cookies: z
+      .array(
+        z.object({
+          name: z.string().describe('Cookie name'),
+          value: z.string().describe('Cookie value'),
+          domain: z.string().describe('Cookie domain (e.g., ".claude.ai")'),
+        })
+      )
+      .optional()
+      .describe('Seed cookies to inject before navigation'),
+    waitFor: z.string().optional().describe('CSS selector to wait for after navigation'),
+  },
+  async ({ domain, url, cookies, waitFor }) => {
+    try {
+      const body: Record<string, unknown> = { domain, url };
+      if (cookies) body.cookies = cookies;
+      if (waitFor) body.waitFor = waitFor;
+
+      const res = await annoRequest('/v1/session/auth', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errorBody = await res.json();
+        return { content: [{ type: 'text' as const, text: `Session auth failed (${res.status}): ${JSON.stringify(errorBody)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Session auth error: ${message}` }] };
     }
   },
 );
