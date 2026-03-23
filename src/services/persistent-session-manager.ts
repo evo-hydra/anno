@@ -373,7 +373,7 @@ export class PersistentSessionManager {
         type: selectorResult.reason,
         selector: selectorResult.pattern,
       });
-      return { detected: true, type: selectorResult.reason, selector: selectorResult.pattern };
+      return { detected: true, type: selectorResult.reason as CaptchaDetectionResult['type'], selector: selectorResult.pattern };
     }
 
     // Fall back to text-based detection
@@ -382,7 +382,7 @@ export class PersistentSessionManager {
       const textResult = detectChallengePage(bodyText);
       if (textResult) {
         logger.warn('challenge text detected', { reason: textResult.reason });
-        return { detected: true, type: textResult.reason };
+        return { detected: true, type: textResult.reason as CaptchaDetectionResult['type'] };
       }
     }
 
