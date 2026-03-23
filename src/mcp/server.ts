@@ -306,8 +306,9 @@ server.tool(
   `Authenticate with Cloudflare-protected sites by navigating with a real
 browser (Playwright + stealth). Injects seed cookies (e.g., sessionKey),
 lets the browser solve Cloudflare challenges, and returns the full cookie
-jar including cf_clearance. Use this to obtain cookies for APIs behind
-Cloudflare bot protection.`,
+jar including cf_clearance. Set createSession=true to get a persistent
+sessionId that can be passed to anno_interact, anno_screenshot, etc. for
+authenticated browsing across multiple calls.`,
   {
     domain: z.string().min(1).describe('Target domain (e.g., "claude.ai")'),
     url: z.string().url().describe('URL to navigate to for cookie resolution'),
@@ -322,10 +323,11 @@ Cloudflare bot protection.`,
       .optional()
       .describe('Seed cookies to inject before navigation'),
     waitFor: z.string().optional().describe('CSS selector to wait for after navigation'),
+    createSession: z.boolean().default(false).describe('Create a persistent session with authenticated cookies — returns sessionId for use in subsequent tool calls'),
   },
-  async ({ domain, url, cookies, waitFor }) => {
+  async ({ domain, url, cookies, waitFor, createSession }) => {
     try {
-      const body: Record<string, unknown> = { domain, url };
+      const body: Record<string, unknown> = { domain, url, createSession };
       if (cookies) body.cookies = cookies;
       if (waitFor) body.waitFor = waitFor;
 
@@ -358,7 +360,8 @@ server.tool(
   `Act on a web page — click buttons, fill forms, select options, scroll,
 hover, type text, and more. Use this to navigate sites, submit forms, and
 trigger UI actions through Anno's stealth browser. Returns the results of
-each action plus a full inventory of interactive elements on the final page.`,
+each action plus a full inventory of interactive elements on the final page.
+Pass sessionId to reuse a persistent browser session across multiple calls.`,
   {
     url: z.string().url().describe('The URL to navigate to'),
     actions: z
@@ -386,12 +389,14 @@ each action plus a full inventory of interactive elements on the final page.`,
       .describe('Actions to execute in order'),
     extract: z.boolean().default(false).describe('Extract page content after actions complete'),
     extractPolicy: z.string().default('default').describe('Extraction policy to use'),
+    sessionId: z.string().optional().describe('Reuse a persistent browser session from a prior call'),
+    createSession: z.boolean().default(false).describe('Create a new persistent session and return its ID'),
   },
-  async ({ url, actions, extract, extractPolicy }) => {
+  async ({ url, actions, extract, extractPolicy, sessionId, createSession }) => {
     try {
       const res = await annoRequest('/v1/interact', {
         method: 'POST',
-        body: JSON.stringify({ url, actions, extract, extractPolicy }),
+        body: JSON.stringify({ url, actions, extract, extractPolicy, sessionId, createSession }),
       });
 
       if (!res.ok) {
@@ -418,7 +423,8 @@ server.tool(
   `Capture a visual screenshot of any web page. Gives AI agents eyes —
 see what's on the page to reason about unfamiliar layouts, verify actions
 worked, or understand visual context that DOM alone can't convey. Optionally
-execute actions (click, scroll, etc.) before capture.`,
+execute actions (click, scroll, etc.) before capture. Pass sessionId to
+capture from a persistent browser session.`,
   {
     url: z.string().url().describe('The URL to navigate to'),
     actions: z
@@ -442,12 +448,14 @@ execute actions (click, scroll, etc.) before capture.`,
       .default([])
       .describe('Actions to execute before taking the screenshot'),
     fullPage: z.boolean().default(false).describe('Capture the full scrollable page instead of just the viewport'),
+    sessionId: z.string().optional().describe('Reuse a persistent browser session'),
+    createSession: z.boolean().default(false).describe('Create a new persistent session'),
   },
-  async ({ url, actions, fullPage }) => {
+  async ({ url, actions, fullPage, sessionId, createSession }) => {
     try {
       const res = await annoRequest('/v1/interact/screenshot', {
         method: 'POST',
-        body: JSON.stringify({ url, actions, fullPage }),
+        body: JSON.stringify({ url, actions, fullPage, sessionId, createSession }),
       });
 
       if (!res.ok) {
@@ -489,7 +497,8 @@ server.tool(
   `Discover what you can interact with on a page. Returns a structured
 inventory of all interactive elements — buttons, links, inputs, selects,
 textareas — with their CSS selectors, text content, and attributes. Use
-this before anno_interact to understand the page layout and plan actions.`,
+this before anno_interact to understand the page layout and plan actions.
+Pass sessionId to inspect a persistent browser session.`,
   {
     url: z.string().url().describe('The URL to inspect'),
     actions: z
@@ -512,12 +521,14 @@ this before anno_interact to understand the page layout and plan actions.`,
       )
       .default([])
       .describe('Actions to execute before inspecting page state'),
+    sessionId: z.string().optional().describe('Reuse a persistent browser session'),
+    createSession: z.boolean().default(false).describe('Create a new persistent session'),
   },
-  async ({ url, actions }) => {
+  async ({ url, actions, sessionId, createSession }) => {
     try {
       const res = await annoRequest('/v1/interact/page-state', {
         method: 'POST',
-        body: JSON.stringify({ url, actions }),
+        body: JSON.stringify({ url, actions, sessionId, createSession }),
       });
 
       if (!res.ok) {

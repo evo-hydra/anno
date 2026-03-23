@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { rendererManager } from '../../services/renderer';
+import { getSessionManager } from '../../services/session-manager';
 import { detectChallengePage, detectChallengeSelectors } from '../../core/wall-detector';
 import { logger } from '../../utils/logger';
 import { extractErrorMessage } from '../../utils/error';
@@ -21,6 +22,7 @@ const sessionAuthSchema = z.object({
     )
     .optional(),
   waitFor: z.string().optional(),
+  createSession: z.boolean().default(false).describe('Create a persistent session with authenticated cookies'),
 });
 
 /**
@@ -40,7 +42,7 @@ router.post('/auth', async (req: Request, res: Response) => {
     return;
   }
 
-  const { domain, url, cookies: seedCookies, waitFor } = parseResult.data;
+  const { domain, url, cookies: seedCookies, waitFor, createSession } = parseResult.data;
 
   // If rendering is disabled, return seed cookies unchanged (graceful degradation)
   if (!config.rendering.enabled) {
@@ -133,12 +135,36 @@ router.post('/auth', async (req: Request, res: Response) => {
 
     const hasCfClearance = result.cookies.some((c) => c.name === 'cf_clearance');
 
+    // Optionally create a persistent session with the authenticated cookies
+    let sessionId: string | undefined;
+    if (createSession) {
+      try {
+        const sm = await getSessionManager();
+        const session = await sm.createSession({
+          name: `auth-${domain}`,
+          cookies: result.cookies.map((c) => ({
+            name: c.name,
+            value: c.value,
+            domain: c.domain,
+            path: c.path,
+          })),
+        });
+        sessionId = session.id;
+        logger.info('session-auth: persistent session created', { sessionId, domain });
+      } catch (err) {
+        logger.warn('session-auth: failed to create persistent session', {
+          error: (err as Error).message,
+        });
+      }
+    }
+
     logger.info('session-auth: completed', {
       domain,
       cookieCount: result.cookies.length,
       challengeDetected: result.challengeDetected,
       cfClearanceObtained: hasCfClearance,
       statusCode: result.statusCode,
+      sessionId: sessionId ?? null,
     });
 
     res.json({
@@ -146,6 +172,7 @@ router.post('/auth', async (req: Request, res: Response) => {
       cookies: result.cookies,
       challengeDetected: result.challengeDetected,
       rendered: true,
+      sessionId,
     });
   } catch (error) {
     const message = extractErrorMessage(error);
