@@ -1,14 +1,24 @@
 /**
  * Detects challenge pages (CAPTCHAs, bot checks) and auth walls (login/paywall gates).
  *
- * Patterns are matched against the first 4KB of the body to avoid false positives
- * from sidebar CTAs, footers, and other ancillary page elements.
+ * Two detection modes:
+ * - Text-based: regex against first 4KB of body (fast, no DOM needed)
+ * - Selector-based: DOM element visibility check (requires Playwright Page)
+ *
+ * Centralizes all challenge detection — PersistentSessionManager and session-auth
+ * delegate to these functions rather than maintaining their own pattern lists.
  */
+
+import type { Page } from 'playwright-core';
 
 export interface DetectionResult {
   reason: string;
   pattern: string;
 }
+
+// ---------------------------------------------------------------------------
+// Text-based detection (regex against raw body text)
+// ---------------------------------------------------------------------------
 
 const CHALLENGE_PATTERNS: ReadonlyArray<{ pattern: RegExp; reason: string }> = [
   { pattern: /captcha/i, reason: 'captcha' },
@@ -18,6 +28,11 @@ const CHALLENGE_PATTERNS: ReadonlyArray<{ pattern: RegExp; reason: string }> = [
   { pattern: /perimeterx/i, reason: 'perimeterx' },
   { pattern: /please enable javascript/i, reason: 'javascript_required' },
   { pattern: /unusual traffic/i, reason: 'unusual_traffic' },
+  // Cloudflare-specific (previously only in PersistentSessionManager)
+  { pattern: /challenge-form/i, reason: 'cloudflare_challenge' },
+  { pattern: /checking your browser/i, reason: 'cloudflare_check' },
+  { pattern: /security check/i, reason: 'security_check' },
+  { pattern: /automated requests/i, reason: 'automated_detection' },
 ];
 
 const AUTH_WALL_PATTERNS: ReadonlyArray<{ pattern: RegExp; reason: string }> = [
@@ -57,3 +72,36 @@ export const detectAuthWall = (body: string): DetectionResult | null =>
 /** Returns true if the page looks like it's gated (challenge OR auth wall). */
 export const isGatedPage = (body: string): boolean =>
   detectChallengePage(body) !== null || detectAuthWall(body) !== null;
+
+// ---------------------------------------------------------------------------
+// Selector-based detection (DOM visibility check — requires Playwright Page)
+// ---------------------------------------------------------------------------
+
+const CHALLENGE_SELECTORS: ReadonlyArray<{ selector: string; reason: string }> = [
+  { selector: '#px-captcha', reason: 'perimeter-x' },
+  { selector: '.g-recaptcha', reason: 'recaptcha' },
+  { selector: 'iframe[src*="recaptcha"]', reason: 'recaptcha' },
+  { selector: 'iframe[src*="hcaptcha"]', reason: 'hcaptcha' },
+  { selector: '.challenge-form', reason: 'cloudflare' },
+  { selector: '#challenge-form', reason: 'cloudflare' },
+  { selector: '[id*="captcha"]', reason: 'unknown_captcha' },
+];
+
+/**
+ * Check for visible challenge elements in the DOM.
+ * Requires a Playwright Page instance.
+ */
+export const detectChallengeSelectors = async (page: Page): Promise<DetectionResult | null> => {
+  for (const { selector, reason } of CHALLENGE_SELECTORS) {
+    try {
+      const element = page.locator(selector);
+      const visible = await element.isVisible({ timeout: 1000 });
+      if (visible) {
+        return { reason, pattern: selector };
+      }
+    } catch {
+      // Element not found — continue
+    }
+  }
+  return null;
+};

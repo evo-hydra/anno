@@ -20,6 +20,7 @@ import { existsSync } from 'fs';
 import { join } from 'path';
 import { logger } from '../utils/logger';
 import { rendererManager } from './renderer';
+import { detectChallengeSelectors, detectChallengePage } from '../core/wall-detector';
 
 interface SessionMetadata {
   domain: string;
@@ -339,48 +340,27 @@ export class PersistentSessionManager {
   }
 
   /**
-   * Detect CAPTCHA challenges on page
+   * Detect CAPTCHA challenges on page.
+   * Delegates to centralized wall-detector for selector-based detection.
    */
   async detectCaptcha(page: Page): Promise<CaptchaDetectionResult> {
-    const detectors = [
-      { selector: '#px-captcha', type: 'perimeter-x' as const },
-      { selector: '.g-recaptcha', type: 'recaptcha' as const },
-      { selector: 'iframe[src*="recaptcha"]', type: 'recaptcha' as const },
-      { selector: 'iframe[src*="hcaptcha"]', type: 'hcaptcha' as const },
-      { selector: '.challenge-form', type: 'cloudflare' as const },
-      { selector: '#challenge-form', type: 'cloudflare' as const },
-      { selector: '[id*="captcha"]', type: 'unknown' as const }
-    ];
-
-    for (const detector of detectors) {
-      try {
-        const element = page.locator(detector.selector);
-        const visible = await element.isVisible({ timeout: 1000 });
-        if (visible) {
-          logger.warn('captcha detected', { type: detector.type, selector: detector.selector });
-          return { detected: true, type: detector.type, selector: detector.selector };
-        }
-      } catch {
-        // Element not found, continue
-      }
+    // Check DOM selectors first (Cloudflare forms, reCAPTCHA, etc.)
+    const selectorResult = await detectChallengeSelectors(page);
+    if (selectorResult) {
+      logger.warn('captcha detected via selector', {
+        type: selectorResult.reason,
+        selector: selectorResult.pattern,
+      });
+      return { detected: true, type: selectorResult.reason, selector: selectorResult.pattern };
     }
 
-    // Check for common challenge text
+    // Fall back to text-based detection
     const bodyText = await page.locator('body').textContent();
     if (bodyText) {
-      const challengeIndicators = [
-        'verify you are human',
-        'checking your browser',
-        'security check',
-        'unusual traffic',
-        'automated requests'
-      ];
-
-      for (const indicator of challengeIndicators) {
-        if (bodyText.toLowerCase().includes(indicator)) {
-          logger.warn('challenge text detected', { indicator });
-          return { detected: true, type: 'unknown' };
-        }
+      const textResult = detectChallengePage(bodyText);
+      if (textResult) {
+        logger.warn('challenge text detected', { reason: textResult.reason });
+        return { detected: true, type: textResult.reason };
       }
     }
 

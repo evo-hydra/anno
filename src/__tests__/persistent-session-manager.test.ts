@@ -441,7 +441,7 @@ describe('PersistentSessionManager', () => {
       const result = await manager.detectCaptcha(mockPage as unknown);
 
       expect(result.detected).toBe(true);
-      expect(result.type).toBe('unknown');
+      expect(result.type).toBe('human_verification');
     });
 
     it('handles isVisible errors gracefully', async () => {
