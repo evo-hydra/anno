@@ -694,6 +694,46 @@ without re-fetching. Returns ranked results with similarity scores.`,
   },
 );
 
+// --- Tool: anno_observe -----------------------------------------------------
+
+server.tool(
+  'anno_observe',
+  `Understand what you're looking at. Navigates to a URL and returns a
+structured comprehension of the page: what type of page it is (login,
+search results, article, product, checkout, form, dashboard, etc.),
+what interactive elements are available, what navigation options exist,
+and what patterns are detected (captcha, paywall, cookie consent, popups).
+Use this as your first step on an unfamiliar page — before deciding
+what to interact with. Pass sessionId for persistent session continuity.`,
+  {
+    url: z.string().url().describe('The URL to observe and comprehend'),
+    sessionId: z.string().optional().describe('Reuse a persistent browser session'),
+    createSession: z.boolean().default(false).describe('Create a new persistent session'),
+  },
+  async ({ url, sessionId, createSession }) => {
+    try {
+      const res = await annoRequest('/v1/interact/observe', {
+        method: 'POST',
+        body: JSON.stringify({ url, sessionId, createSession }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno observe failed (${res.status}): ${JSON.stringify(body)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno observe error: ${message}` }] };
+    }
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------

@@ -12,6 +12,7 @@ import type { Page } from 'playwright-core';
 import { rendererManager } from '../../services/renderer';
 import { getSessionManager } from '../../services/session-manager';
 import { interactionManager, type BrowserAction, type PageState } from '../../services/interaction-manager';
+import { observePage } from '../../services/page-observer';
 import { distillContent } from '../../services/distiller';
 import { asyncHandler } from '../../middleware/error-handler';
 import { logger } from '../../utils/logger';
@@ -314,6 +315,55 @@ router.post('/page-state', asyncHandler(async (req: Request, res: Response) => {
   logger.info('interact/page-state: request completed', {
     url,
     elementCount: result.pageState.interactiveElements.length
+  });
+
+  res.json({ ...result, sessionId: resolvedSessionId });
+}));
+
+// ---------------------------------------------------------------------------
+// POST /interact/observe — Page comprehension
+// ---------------------------------------------------------------------------
+
+const observeRequestSchema = z.object({
+  url: z.string().url(),
+  sessionId: z.string().optional(),
+  createSession: z.boolean().default(false),
+});
+
+router.post('/observe', asyncHandler(async (req: Request, res: Response) => {
+  const parseResult = observeRequestSchema.safeParse(req.body);
+  if (!parseResult.success) {
+    res.status(400).json({
+      error: 'invalid_request',
+      message: 'Request validation failed',
+      details: parseResult.error.flatten(),
+      timestamp: Date.now(),
+      path: req.path
+    });
+    return;
+  }
+
+  const { url, sessionId, createSession } = parseResult.data;
+
+  logger.info('interact/observe: request received', {
+    url,
+    sessionId: sessionId ?? null,
+  });
+
+  req.setTimeout(INTERACTION_TIMEOUT_MS);
+
+  const { result, sessionId: resolvedSessionId } = await withSessionOrPage(
+    { sessionId, createSession },
+    async (page) => {
+      await navigateToUrl(page, url);
+      return observePage(page);
+    },
+  );
+
+  logger.info('interact/observe: request completed', {
+    url,
+    pageType: result.pageType,
+    confidence: result.confidence,
   });
 
   res.json({ ...result, sessionId: resolvedSessionId });
