@@ -1,7 +1,7 @@
 {
   "name": "@evointel/anno",
   "version": "1.0.1",
-  "description": "Web content extraction for AI agents — ensemble extraction with confidence scoring, 93% token reduction vs raw HTML",
+  "description": "Web autonomy for AI agents — navigate, authenticate, interact, and extract with a stealth browser. The comprehension layer between your AI and the internet.",
   "private": false,
   "engines": {
     "node": ">=18"
