@@ -12,16 +12,11 @@
  * @module services/auth-manager
  */
 
-import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-  scryptSync
-} from 'node:crypto';
 import { readFile, writeFile, readdir, unlink, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '../utils/logger';
+import { encrypt, decrypt, loadOrCreateKey } from '../core/crypto';
 import { getSessionManager } from './session-manager';
 import { interactionManager } from './interaction-manager';
 
@@ -104,11 +99,7 @@ const AUTH_KEY_FILE = join(AUTH_DATA_DIR, '.auth-key');
 const PROFILE_SUFFIX = '.profile.enc';
 
 // Encryption constants — identical to session-manager
-const ALGORITHM = 'aes-256-gcm';
-const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
-const SALT_LENGTH = 32;
-const KEY_LENGTH = 32;
+// Encryption delegated to core/crypto — constants removed
 
 // Login defaults
 const DEFAULT_STEP_TIMEOUT = 30_000;
@@ -135,7 +126,7 @@ export class AuthManager {
     if (this.initialised) return;
 
     await this.ensureDataDir();
-    await this.loadOrCreateEncryptionKey();
+    this.encryptionKey = await loadOrCreateKey(AUTH_KEY_FILE, 'auth');
     this.initialised = true;
 
     logger.info('AuthManager initialised', { dataDir: AUTH_DATA_DIR });
@@ -656,66 +647,9 @@ export class AuthManager {
   // Private: Encryption (same AES-256-GCM scheme as SessionManager)
   // -----------------------------------------------------------------------
 
-  private encrypt(plaintext: string, key: Buffer): Buffer {
-    const iv = randomBytes(IV_LENGTH);
-    const cipher = createCipheriv(ALGORITHM, key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final(),
-    ]);
-    const authTag = cipher.getAuthTag();
-
-    // Layout: [iv (16)] [authTag (16)] [ciphertext (...)]
-    return Buffer.concat([iv, authTag, encrypted]);
-  }
-
-  private decrypt(data: Buffer, key: Buffer): string {
-    const iv = data.subarray(0, IV_LENGTH);
-    const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
-    const ciphertext = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
-
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
-    decipher.setAuthTag(authTag);
-
-    const decrypted = Buffer.concat([
-      decipher.update(ciphertext),
-      decipher.final(),
-    ]);
-
-    return decrypted.toString('utf8');
-  }
-
-  /**
-   * Load the auth encryption key from disk, or generate + persist a new one.
-   * Uses the same [salt | derived-key] format as session-manager.
-   */
-  private async loadOrCreateEncryptionKey(): Promise<void> {
-    await this.ensureDataDir();
-
-    if (existsSync(AUTH_KEY_FILE)) {
-      const raw = await readFile(AUTH_KEY_FILE);
-      // Key file stores: [salt (32)] [derived-key (32)]
-      if (raw.length === SALT_LENGTH + KEY_LENGTH) {
-        this.encryptionKey = raw.subarray(SALT_LENGTH, SALT_LENGTH + KEY_LENGTH);
-        logger.debug('auth encryption key loaded from disk');
-        return;
-      }
-      logger.warn('auth encryption key file invalid, regenerating');
-    }
-
-    // Generate fresh key material
-    const salt = randomBytes(SALT_LENGTH);
-    const secret = randomBytes(64);
-    const derived = scryptSync(secret, salt, KEY_LENGTH);
-    this.encryptionKey = derived as Buffer;
-
-    await writeFile(AUTH_KEY_FILE, Buffer.concat([salt, derived]));
-    logger.info('new auth encryption key generated and stored');
-  }
-
   private async getEncryptionKey(): Promise<Buffer> {
     if (!this.encryptionKey) {
-      await this.loadOrCreateEncryptionKey();
+      this.encryptionKey = await loadOrCreateKey(AUTH_KEY_FILE, 'auth');
     }
     return this.encryptionKey!;
   }
@@ -730,7 +664,7 @@ export class AuthManager {
   private async saveProfileToDisk(profile: StoredProfile): Promise<void> {
     const key = await this.getEncryptionKey();
     const plaintext = JSON.stringify(profile);
-    const encrypted = this.encrypt(plaintext, key);
+    const encrypted = encrypt(plaintext, key);
 
     await this.ensureDataDir();
     const filePath = this.profileFilePath(profile.name);
@@ -751,7 +685,7 @@ export class AuthManager {
 
     const key = await this.getEncryptionKey();
     const encrypted = await readFile(filePath);
-    const plaintext = this.decrypt(encrypted, key);
+    const plaintext = decrypt(encrypted, key);
     const profile: StoredProfile = JSON.parse(plaintext);
 
     logger.debug('auth:loadProfileFromDisk', { name });

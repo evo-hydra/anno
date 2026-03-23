@@ -16,17 +16,12 @@ import {
   type BrowserContext,
   type Page
 } from 'playwright-core';
-import {
-  randomUUID,
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-  scryptSync
-} from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { logger } from '../utils/logger';
+import { encrypt, decrypt, loadOrCreateKey } from '../core/crypto';
 import { rendererManager } from './renderer';
 
 // ---------------------------------------------------------------------------
@@ -83,12 +78,8 @@ const CLEANUP_INTERVAL_MS = 60_000; // 60 seconds
 const SESSION_DATA_DIR = join(__dirname, '..', '..', 'data', 'sessions');
 const SESSION_KEY_FILE = join(SESSION_DATA_DIR, '.session-key');
 
-// Encryption constants
-const ALGORITHM = 'aes-256-gcm';
-const IV_LENGTH = 16;
-const AUTH_TAG_LENGTH = 16;
-const SALT_LENGTH = 32;
-const KEY_LENGTH = 32;
+// Encryption key file path (key logic delegated to core/crypto)
+
 
 // ---------------------------------------------------------------------------
 // SessionManager
@@ -115,7 +106,7 @@ export class SessionManager {
    */
   async init(): Promise<void> {
     await this.ensureDataDir();
-    await this.loadOrCreateEncryptionKey();
+    this.encryptionKey = await loadOrCreateKey(SESSION_KEY_FILE, 'session');
     this.startCleanupTimer();
     this.registerShutdownHooks();
     logger.info('SessionManager initialised', {
@@ -368,7 +359,7 @@ export class SessionManager {
     }
 
     const plaintext = JSON.stringify(cookies);
-    const encrypted = this.encrypt(plaintext, key);
+    const encrypted = encrypt(plaintext, key);
 
     await this.ensureDataDir();
     const filePath = this.cookieFilePath(sessionId);
@@ -397,7 +388,7 @@ export class SessionManager {
 
     const key = await this.getEncryptionKey();
     const encrypted = await readFile(filePath);
-    const plaintext = this.decrypt(encrypted, key);
+    const plaintext = decrypt(encrypted, key);
     const cookies = JSON.parse(plaintext);
 
     await context.addCookies(cookies);
@@ -412,67 +403,9 @@ export class SessionManager {
   // Encryption helpers
   // -----------------------------------------------------------------------
 
-  private encrypt(plaintext: string, key: Buffer): Buffer {
-    const iv = randomBytes(IV_LENGTH);
-    const cipher = createCipheriv(ALGORITHM, key, iv);
-    const encrypted = Buffer.concat([
-      cipher.update(plaintext, 'utf8'),
-      cipher.final()
-    ]);
-    const authTag = cipher.getAuthTag();
-
-    // Layout: [iv (16)] [authTag (16)] [ciphertext (...)]
-    return Buffer.concat([iv, authTag, encrypted]);
-  }
-
-  private decrypt(data: Buffer, key: Buffer): string {
-    const iv = data.subarray(0, IV_LENGTH);
-    const authTag = data.subarray(IV_LENGTH, IV_LENGTH + AUTH_TAG_LENGTH);
-    const ciphertext = data.subarray(IV_LENGTH + AUTH_TAG_LENGTH);
-
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
-    decipher.setAuthTag(authTag);
-
-    const decrypted = Buffer.concat([
-      decipher.update(ciphertext),
-      decipher.final()
-    ]);
-
-    return decrypted.toString('utf8');
-  }
-
-  /**
-   * Load the encryption key from disk, or generate + persist a new one.
-   */
-  private async loadOrCreateEncryptionKey(): Promise<void> {
-    await this.ensureDataDir();
-
-    if (existsSync(SESSION_KEY_FILE)) {
-      const raw = await readFile(SESSION_KEY_FILE);
-      // The key file stores: [salt (32)] [derived-key (32)]
-      if (raw.length === SALT_LENGTH + KEY_LENGTH) {
-        this.encryptionKey = raw.subarray(SALT_LENGTH, SALT_LENGTH + KEY_LENGTH);
-        logger.debug('encryption key loaded from disk');
-        return;
-      }
-      // If the file is corrupt or wrong length, regenerate
-      logger.warn('encryption key file invalid, regenerating');
-    }
-
-    // Generate fresh key material
-    const salt = randomBytes(SALT_LENGTH);
-    const secret = randomBytes(64); // random master secret
-    const derived = scryptSync(secret, salt, KEY_LENGTH);
-    this.encryptionKey = derived as Buffer;
-
-    // Persist [salt | derived-key] so we can decrypt later
-    await writeFile(SESSION_KEY_FILE, Buffer.concat([salt, derived]));
-    logger.info('new encryption key generated and stored');
-  }
-
   private async getEncryptionKey(): Promise<Buffer> {
     if (!this.encryptionKey) {
-      await this.loadOrCreateEncryptionKey();
+      this.encryptionKey = await loadOrCreateKey(SESSION_KEY_FILE, 'session');
     }
     return this.encryptionKey!;
   }
