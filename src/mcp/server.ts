@@ -351,6 +351,66 @@ Cloudflare bot protection.`,
   },
 );
 
+// --- Tool: anno_interact ----------------------------------------------------
+
+server.tool(
+  'anno_interact',
+  `Act on a web page — click buttons, fill forms, select options, scroll,
+hover, type text, and more. Use this to navigate sites, submit forms, and
+trigger UI actions through Anno's stealth browser. Returns the results of
+each action plus a full inventory of interactive elements on the final page.`,
+  {
+    url: z.string().url().describe('The URL to navigate to'),
+    actions: z
+      .array(
+        z.object({
+          type: z
+            .enum(['click', 'fill', 'select', 'scroll', 'hover', 'waitFor', 'type', 'screenshot', 'evaluate', 'getPageState'])
+            .describe('The action to perform'),
+          selector: z.string().optional().describe('CSS selector for the target element'),
+          value: z.string().optional().describe('Value for fill/type/select/evaluate actions'),
+          direction: z.enum(['up', 'down', 'top', 'bottom']).optional().describe('Scroll direction'),
+          condition: z
+            .object({
+              kind: z.enum(['selector', 'timeout', 'networkidle', 'expression']),
+              selector: z.string().optional(),
+              ms: z.number().optional(),
+              expression: z.string().optional(),
+            })
+            .optional()
+            .describe('Wait condition for waitFor action'),
+          expression: z.string().optional().describe('JavaScript expression for evaluate action'),
+        })
+      )
+      .default([])
+      .describe('Actions to execute in order'),
+    extract: z.boolean().default(false).describe('Extract page content after actions complete'),
+    extractPolicy: z.string().default('default').describe('Extraction policy to use'),
+  },
+  async ({ url, actions, extract, extractPolicy }) => {
+    try {
+      const res = await annoRequest('/v1/interact', {
+        method: 'POST',
+        body: JSON.stringify({ url, actions, extract, extractPolicy }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno interact failed (${res.status}): ${JSON.stringify(body)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno interact error: ${message}` }] };
+    }
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
