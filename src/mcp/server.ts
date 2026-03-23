@@ -411,6 +411,278 @@ each action plus a full inventory of interactive elements on the final page.`,
   },
 );
 
+// --- Tool: anno_screenshot --------------------------------------------------
+
+server.tool(
+  'anno_screenshot',
+  `Capture a visual screenshot of any web page. Gives AI agents eyes —
+see what's on the page to reason about unfamiliar layouts, verify actions
+worked, or understand visual context that DOM alone can't convey. Optionally
+execute actions (click, scroll, etc.) before capture.`,
+  {
+    url: z.string().url().describe('The URL to navigate to'),
+    actions: z
+      .array(
+        z.object({
+          type: z.enum(['click', 'fill', 'select', 'scroll', 'hover', 'waitFor', 'type', 'evaluate']).describe('Action to perform before screenshot'),
+          selector: z.string().optional(),
+          value: z.string().optional(),
+          direction: z.enum(['up', 'down', 'top', 'bottom']).optional(),
+          condition: z
+            .object({
+              kind: z.enum(['selector', 'timeout', 'networkidle', 'expression']),
+              selector: z.string().optional(),
+              ms: z.number().optional(),
+              expression: z.string().optional(),
+            })
+            .optional(),
+          expression: z.string().optional(),
+        })
+      )
+      .default([])
+      .describe('Actions to execute before taking the screenshot'),
+    fullPage: z.boolean().default(false).describe('Capture the full scrollable page instead of just the viewport'),
+  },
+  async ({ url, actions, fullPage }) => {
+    try {
+      const res = await annoRequest('/v1/interact/screenshot', {
+        method: 'POST',
+        body: JSON.stringify({ url, actions, fullPage }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno screenshot failed (${res.status}): ${JSON.stringify(body)}` }] };
+      }
+
+      const result = (await res.json()) as { screenshot?: string; pageState?: unknown; [key: string]: unknown };
+
+      const content: Array<{ type: 'text'; text: string } | { type: 'image'; data: string; mimeType: string }> = [];
+
+      if (result.screenshot) {
+        content.push({
+          type: 'image' as const,
+          data: result.screenshot,
+          mimeType: 'image/png',
+        });
+      }
+
+      // Include page state as text alongside the image
+      const stateInfo = result.pageState ? JSON.stringify(result.pageState, null, 2) : 'No page state returned';
+      content.push({ type: 'text' as const, text: stateInfo });
+
+      return { content };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno screenshot error: ${message}` }] };
+    }
+  },
+);
+
+// --- Tool: anno_page_state -------------------------------------------------
+
+server.tool(
+  'anno_page_state',
+  `Discover what you can interact with on a page. Returns a structured
+inventory of all interactive elements — buttons, links, inputs, selects,
+textareas — with their CSS selectors, text content, and attributes. Use
+this before anno_interact to understand the page layout and plan actions.`,
+  {
+    url: z.string().url().describe('The URL to inspect'),
+    actions: z
+      .array(
+        z.object({
+          type: z.enum(['click', 'fill', 'select', 'scroll', 'hover', 'waitFor', 'type', 'evaluate']).describe('Action to perform before inspecting'),
+          selector: z.string().optional(),
+          value: z.string().optional(),
+          direction: z.enum(['up', 'down', 'top', 'bottom']).optional(),
+          condition: z
+            .object({
+              kind: z.enum(['selector', 'timeout', 'networkidle', 'expression']),
+              selector: z.string().optional(),
+              ms: z.number().optional(),
+              expression: z.string().optional(),
+            })
+            .optional(),
+          expression: z.string().optional(),
+        })
+      )
+      .default([])
+      .describe('Actions to execute before inspecting page state'),
+  },
+  async ({ url, actions }) => {
+    try {
+      const res = await annoRequest('/v1/interact/page-state', {
+        method: 'POST',
+        body: JSON.stringify({ url, actions }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno page-state failed (${res.status}): ${JSON.stringify(body)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno page-state error: ${message}` }] };
+    }
+  },
+);
+
+// --- Tool: anno_workflow ----------------------------------------------------
+
+server.tool(
+  'anno_workflow',
+  `Execute a multi-step browser workflow with conditionals, loops, and
+variable interpolation. Chain together navigation, interaction, extraction,
+waiting, and screenshots into a repeatable automation sequence. Ideal for
+complex tasks like "log in, search for X, extract results, paginate."`,
+  {
+    workflow: z.object({
+      name: z.string().min(1).describe('Workflow name'),
+      description: z.string().optional().describe('What this workflow does'),
+      options: z.object({
+        timeout: z.number().positive().optional().describe('Overall timeout in ms (default 120000)'),
+        continueOnError: z.boolean().optional().describe('Keep going after step failure'),
+        sessionTtl: z.number().positive().optional().describe('Session TTL in seconds (default 1800)'),
+      }).optional(),
+      variables: z.record(z.string(), z.string()).optional().describe('Initial variables for {{interpolation}}'),
+      steps: z.array(z.record(z.string(), z.unknown())).min(1).describe('Workflow steps — types: fetch, interact, extract, wait, screenshot, setVariable, if, loop'),
+    }).describe('The workflow definition'),
+  },
+  async ({ workflow }) => {
+    try {
+      const res = await annoRequest('/v1/workflow', {
+        method: 'POST',
+        body: JSON.stringify({ workflow }),
+      });
+
+      if (!res.ok) {
+        const body = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno workflow failed (${res.status}): ${JSON.stringify(body)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno workflow error: ${message}` }] };
+    }
+  },
+);
+
+// --- Tool: anno_watch -------------------------------------------------------
+
+server.tool(
+  'anno_watch',
+  `Monitor a URL for content changes over time. Register a watch to
+periodically check a page and detect when its content changes beyond a
+threshold. Use for tracking price changes, page updates, or any content
+you need to stay informed about. Pass a watchId to check status of an
+existing watch instead of creating a new one.`,
+  {
+    url: z.string().url().optional().describe('URL to watch (required for creating a new watch)'),
+    interval: z.number().int().min(60).default(3600).describe('Check interval in seconds (min 60, default 3600)'),
+    changeThreshold: z.number().min(0).max(100).default(1).describe('Minimum change percentage to trigger (0-100)'),
+    webhookUrl: z.string().url().optional().describe('URL to POST change notifications to'),
+    watchId: z.string().optional().describe('ID of an existing watch to check status (omit to create a new watch)'),
+  },
+  async ({ url, interval, changeThreshold, webhookUrl, watchId }) => {
+    try {
+      // If watchId is provided, check status of existing watch
+      if (watchId) {
+        const res = await annoRequest(`/v1/watch/${watchId}`);
+        if (!res.ok) {
+          const body = await res.json();
+          return { content: [{ type: 'text' as const, text: `Anno watch status failed (${res.status}): ${JSON.stringify(body)}` }] };
+        }
+        const result = await res.json();
+        return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+      }
+
+      // Create a new watch
+      if (!url) {
+        return { content: [{ type: 'text' as const, text: 'Error: url is required when creating a new watch (no watchId provided)' }] };
+      }
+
+      const body: Record<string, unknown> = { url, interval, changeThreshold };
+      if (webhookUrl) body.webhookUrl = webhookUrl;
+
+      const res = await annoRequest('/v1/watch', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno watch create failed (${res.status}): ${JSON.stringify(errBody)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno watch error: ${message}` }] };
+    }
+  },
+);
+
+// --- Tool: anno_search ------------------------------------------------------
+
+server.tool(
+  'anno_search',
+  `Search over previously extracted web content using semantic similarity.
+Query Anno's vector index to find relevant content from past extractions
+without re-fetching. Returns ranked results with similarity scores.`,
+  {
+    query: z.string().min(1).describe('Search query'),
+    k: z.number().int().min(1).max(20).optional().describe('Number of results to return (default 5)'),
+    minScore: z.number().optional().describe('Minimum similarity score threshold'),
+    filter: z.record(z.string(), z.unknown()).optional().describe('Metadata filter for narrowing results'),
+  },
+  async ({ query, k, minScore, filter }) => {
+    try {
+      const body: Record<string, unknown> = { query };
+      if (k !== undefined) body.k = k;
+      if (minScore !== undefined) body.minScore = minScore;
+      if (filter !== undefined) body.filter = filter;
+
+      const res = await annoRequest('/v1/semantic/search', {
+        method: 'POST',
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errBody = await res.json();
+        return { content: [{ type: 'text' as const, text: `Anno search failed (${res.status}): ${JSON.stringify(errBody)}` }] };
+      }
+
+      const result = await res.json();
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result, null, 2) }] };
+    } catch (error) {
+      const message = extractErrorMessage(error);
+      if (message.includes('ECONNREFUSED')) {
+        return { content: [{ type: 'text' as const, text: `Anno server is not running at ${ANNO_BASE_URL}. Start it with: npm start` }] };
+      }
+      return { content: [{ type: 'text' as const, text: `Anno search error: ${message}` }] };
+    }
+  },
+);
+
 // ---------------------------------------------------------------------------
 // Start
 // ---------------------------------------------------------------------------
