@@ -15,9 +15,11 @@ import express, { type Router } from 'express';
 const {
   mockWithPage,
   mockDetectChallengePage,
+  mockDetectChallengeSelectors,
 } = vi.hoisted(() => ({
   mockWithPage: vi.fn(),
   mockDetectChallengePage: vi.fn().mockReturnValue(null),
+  mockDetectChallengeSelectors: vi.fn().mockResolvedValue(null),
 }));
 
 // ---------------------------------------------------------------------------
@@ -40,6 +42,7 @@ vi.mock('../../services/renderer', () => ({
 
 vi.mock('../../core/wall-detector', () => ({
   detectChallengePage: mockDetectChallengePage,
+  detectChallengeSelectors: mockDetectChallengeSelectors,
 }));
 
 vi.mock('../../utils/error', () => ({

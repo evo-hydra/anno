@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { rendererManager } from '../../services/renderer';
-import { detectChallengePage } from '../../core/wall-detector';
+import { detectChallengePage, detectChallengeSelectors } from '../../core/wall-detector';
 import { logger } from '../../utils/logger';
 import { extractErrorMessage } from '../../utils/error';
 import { config } from '../../config/env';
@@ -70,22 +70,24 @@ router.post('/auth', async (req: Request, res: Response) => {
           timeout: 30_000,
         });
 
-        // Check if a challenge page was returned
+        // Check for challenge via both text patterns AND DOM selectors
         const bodyText = await page.content();
-        const challengeResult = detectChallengePage(bodyText);
-        const challengeDetected = challengeResult !== null;
+        const textChallenge = detectChallengePage(bodyText);
+        const selectorChallenge = await detectChallengeSelectors(page);
+        const challengeDetected = textChallenge !== null || selectorChallenge !== null;
 
         if (challengeDetected) {
+          const reason = textChallenge?.reason ?? selectorChallenge?.reason;
           logger.info('session-auth: challenge detected, waiting for resolution', {
             domain,
-            reason: challengeResult?.reason,
+            reason,
+            method: textChallenge ? 'text' : 'selector',
           });
 
           // Wait for challenge to resolve (Cloudflare typically redirects after solving)
           try {
             await page.waitForNavigation({ waitUntil: 'networkidle', timeout: 15_000 });
           } catch {
-            // Navigation timeout — challenge may have resolved in-place
             logger.debug('session-auth: navigation wait timed out — checking cookies anyway');
           }
         }
@@ -129,10 +131,13 @@ router.post('/auth', async (req: Request, res: Response) => {
       }
     );
 
+    const hasCfClearance = result.cookies.some((c) => c.name === 'cf_clearance');
+
     logger.info('session-auth: completed', {
       domain,
       cookieCount: result.cookies.length,
       challengeDetected: result.challengeDetected,
+      cfClearanceObtained: hasCfClearance,
       statusCode: result.statusCode,
     });
 
