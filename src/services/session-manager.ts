@@ -399,6 +399,27 @@ export class SessionManager {
     });
   }
 
+  /**
+   * Get cookies from a session's browser context.
+   * Public API for consumers that need cookie extraction without saving to disk.
+   */
+  async getCookies(sessionId: string): Promise<Array<{
+    name: string;
+    value: string;
+    domain: string;
+    path: string;
+    expires: number;
+    httpOnly: boolean;
+    secure: boolean;
+    sameSite: 'Strict' | 'Lax' | 'None';
+  }>> {
+    const record = this.sessions.get(sessionId);
+    if (!record) {
+      throw new Error(`Session not found: ${sessionId}`);
+    }
+    return record.context.cookies();
+  }
+
   // -----------------------------------------------------------------------
   // Encryption helpers
   // -----------------------------------------------------------------------
