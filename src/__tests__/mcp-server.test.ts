@@ -63,11 +63,19 @@ afterAll(() => {
 // ---------------------------------------------------------------------------
 
 describe('MCP Server tool registration', () => {
-  it('registers all four tools', () => {
+  it('registers all eleven tools', () => {
     expect(registeredTools.has('anno_fetch')).toBe(true);
     expect(registeredTools.has('anno_batch_fetch')).toBe(true);
     expect(registeredTools.has('anno_crawl')).toBe(true);
     expect(registeredTools.has('anno_health')).toBe(true);
+    expect(registeredTools.has('anno_session_auth')).toBe(true);
+    expect(registeredTools.has('anno_interact')).toBe(true);
+    expect(registeredTools.has('anno_screenshot')).toBe(true);
+    expect(registeredTools.has('anno_page_state')).toBe(true);
+    expect(registeredTools.has('anno_workflow')).toBe(true);
+    expect(registeredTools.has('anno_watch')).toBe(true);
+    expect(registeredTools.has('anno_search')).toBe(true);
+    expect(registeredTools.has('anno_observe')).toBe(true);
   });
 
   it('each tool has a description', () => {
@@ -476,5 +484,485 @@ describe('anno_crawl', () => {
     });
 
     expect(result.content[0].text).toContain('Crawl cancelled');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_interact tool
+// ---------------------------------------------------------------------------
+
+describe('anno_interact', () => {
+  it('returns action results and page state on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        results: [{ action: 'click', success: true }],
+        pageState: { url: 'https://example.com', interactiveElements: [] },
+        totalDuration: 500,
+      }),
+    });
+
+    const handler = registeredTools.get('anno_interact')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [{ type: 'click', selector: '#btn' }],
+      extract: false,
+      extractPolicy: 'default',
+    });
+
+    expect(result.content[0].text).toContain('success');
+    expect(result.content[0].text).toContain('click');
+  });
+
+  it('handles server error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: 'Bad request' }),
+    });
+
+    const handler = registeredTools.get('anno_interact')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+      extract: false,
+      extractPolicy: 'default',
+    });
+
+    expect(result.content[0].text).toContain('interact failed');
+    expect(result.content[0].text).toContain('400');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_interact')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+      extract: false,
+      extractPolicy: 'default',
+    });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+
+  it('passes sessionId and createSession in request body', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ success: true, results: [], pageState: {}, sessionId: 'sess-123' }),
+    });
+
+    const handler = registeredTools.get('anno_interact')!.handler;
+    await handler({
+      url: 'https://example.com',
+      actions: [],
+      extract: false,
+      extractPolicy: 'default',
+      sessionId: 'sess-123',
+      createSession: true,
+    });
+
+    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body.sessionId).toBe('sess-123');
+    expect(body.createSession).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_screenshot tool
+// ---------------------------------------------------------------------------
+
+describe('anno_screenshot', () => {
+  it('returns image content and page state on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        screenshot: 'base64encodeddata',
+        pageState: { url: 'https://example.com', title: 'Test' },
+      }),
+    });
+
+    const handler = registeredTools.get('anno_screenshot')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+      fullPage: false,
+    });
+
+    // Should have image + text content blocks
+    expect(result.content.length).toBe(2);
+    expect(result.content[0].type).toBe('image');
+    expect(result.content[0].data).toBe('base64encodeddata');
+    expect(result.content[1].type).toBe('text');
+  });
+
+  it('handles missing screenshot gracefully', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        pageState: { url: 'https://example.com', title: 'Test' },
+      }),
+    });
+
+    const handler = registeredTools.get('anno_screenshot')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+      fullPage: false,
+    });
+
+    // Only text content (no image when screenshot is missing)
+    expect(result.content.length).toBe(1);
+    expect(result.content[0].type).toBe('text');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_screenshot')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+      fullPage: false,
+    });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_page_state tool
+// ---------------------------------------------------------------------------
+
+describe('anno_page_state', () => {
+  it('returns page state on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        pageState: {
+          url: 'https://example.com',
+          interactiveElements: [
+            { type: 'button', selector: '#submit', text: 'Submit' },
+            { type: 'input', selector: '#email', text: '' },
+          ],
+        },
+      }),
+    });
+
+    const handler = registeredTools.get('anno_page_state')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+    });
+
+    expect(result.content[0].text).toContain('button');
+    expect(result.content[0].text).toContain('Submit');
+    expect(result.content[0].text).toContain('input');
+  });
+
+  it('handles server error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Internal error' }),
+    });
+
+    const handler = registeredTools.get('anno_page_state')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      actions: [],
+    });
+
+    expect(result.content[0].text).toContain('page-state failed');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_workflow tool
+// ---------------------------------------------------------------------------
+
+describe('anno_workflow', () => {
+  it('returns workflow results on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        result: {
+          status: 'completed',
+          steps: [{ id: 'step1', status: 'completed' }],
+          extractions: [],
+          screenshots: [],
+          totalDuration: 1000,
+        },
+      }),
+    });
+
+    const handler = registeredTools.get('anno_workflow')!.handler;
+    const result = await handler({
+      workflow: {
+        name: 'test-workflow',
+        steps: [{ type: 'fetch', url: 'https://example.com' }],
+      },
+    });
+
+    expect(result.content[0].text).toContain('completed');
+    expect(result.content[0].text).toContain('step1');
+  });
+
+  it('handles workflow failure', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: 'Invalid workflow' }),
+    });
+
+    const handler = registeredTools.get('anno_workflow')!.handler;
+    const result = await handler({
+      workflow: {
+        name: 'bad-workflow',
+        steps: [{ type: 'invalid' }],
+      },
+    });
+
+    expect(result.content[0].text).toContain('workflow failed');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_workflow')!.handler;
+    const result = await handler({
+      workflow: {
+        name: 'test',
+        steps: [{ type: 'fetch', url: 'https://example.com' }],
+      },
+    });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_watch tool
+// ---------------------------------------------------------------------------
+
+describe('anno_watch', () => {
+  it('creates a new watch', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ watchId: 'watch-123', url: 'https://example.com', interval: 3600 }),
+    });
+
+    const handler = registeredTools.get('anno_watch')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      interval: 3600,
+      changeThreshold: 1,
+    });
+
+    expect(result.content[0].text).toContain('watch-123');
+  });
+
+  it('checks status of existing watch', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ watchId: 'watch-123', status: 'active', lastCheck: '2026-03-23' }),
+    });
+
+    const handler = registeredTools.get('anno_watch')!.handler;
+    const result = await handler({
+      watchId: 'watch-123',
+      interval: 3600,
+      changeThreshold: 1,
+    });
+
+    expect(result.content[0].text).toContain('active');
+
+    // Should call GET, not POST
+    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(fetchCall[0]).toContain('/v1/watch/watch-123');
+  });
+
+  it('requires url when creating a new watch', async () => {
+    const handler = registeredTools.get('anno_watch')!.handler;
+    const result = await handler({
+      interval: 3600,
+      changeThreshold: 1,
+    });
+
+    expect(result.content[0].text).toContain('url is required');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_watch')!.handler;
+    const result = await handler({
+      url: 'https://example.com',
+      interval: 3600,
+      changeThreshold: 1,
+    });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_search tool
+// ---------------------------------------------------------------------------
+
+describe('anno_search', () => {
+  it('returns search results on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        results: [
+          { id: 'doc1', score: 0.95, text: 'Relevant content' },
+          { id: 'doc2', score: 0.82, text: 'Also relevant' },
+        ],
+      }),
+    });
+
+    const handler = registeredTools.get('anno_search')!.handler;
+    const result = await handler({ query: 'test query' });
+
+    expect(result.content[0].text).toContain('doc1');
+    expect(result.content[0].text).toContain('0.95');
+  });
+
+  it('handles server error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Vector store unavailable' }),
+    });
+
+    const handler = registeredTools.get('anno_search')!.handler;
+    const result = await handler({ query: 'test' });
+
+    expect(result.content[0].text).toContain('search failed');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_search')!.handler;
+    const result = await handler({ query: 'test' });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_observe tool
+// ---------------------------------------------------------------------------
+
+describe('anno_observe', () => {
+  it('returns page observation on success', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        url: 'https://example.com',
+        title: 'Example',
+        pageType: 'article',
+        confidence: 0.85,
+        interactiveElements: { buttons: 2, links: 10, inputs: 0, selects: 0, textareas: 0, total: 12 },
+        navigation: [{ text: 'Home', href: '/', selector: 'nav a:first-of-type' }],
+        detectedPatterns: [],
+        contentSummary: { headings: ['Main Title'], textLength: 5000, imageCount: 3, formCount: 0 },
+      }),
+    });
+
+    const handler = registeredTools.get('anno_observe')!.handler;
+    const result = await handler({ url: 'https://example.com' });
+
+    expect(result.content[0].text).toContain('article');
+    expect(result.content[0].text).toContain('0.85');
+    expect(result.content[0].text).toContain('Main Title');
+  });
+
+  it('passes sessionId in request', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ pageType: 'unknown', confidence: 0.1 }),
+    });
+
+    const handler = registeredTools.get('anno_observe')!.handler;
+    await handler({ url: 'https://example.com', sessionId: 'sess-abc', createSession: false });
+
+    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body.sessionId).toBe('sess-abc');
+  });
+
+  it('handles server error', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: 'Observe failed' }),
+    });
+
+    const handler = registeredTools.get('anno_observe')!.handler;
+    const result = await handler({ url: 'https://example.com' });
+
+    expect(result.content[0].text).toContain('observe failed');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_observe')!.handler;
+    const result = await handler({ url: 'https://example.com' });
+
+    expect(result.content[0].text).toContain('not running');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// anno_session_auth tool (sessionId threading)
+// ---------------------------------------------------------------------------
+
+describe('anno_session_auth', () => {
+  it('passes createSession in request body', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        success: true,
+        cookies: [{ name: 'cf_clearance', value: 'abc', domain: '.example.com' }],
+        challengeDetected: false,
+        rendered: true,
+        sessionId: 'sess-new',
+      }),
+    });
+
+    const handler = registeredTools.get('anno_session_auth')!.handler;
+    const result = await handler({
+      domain: 'example.com',
+      url: 'https://example.com',
+      createSession: true,
+    });
+
+    const fetchCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse(fetchCall[1].body);
+    expect(body.createSession).toBe(true);
+    expect(result.content[0].text).toContain('sess-new');
+  });
+
+  it('handles ECONNREFUSED', async () => {
+    global.fetch = vi.fn().mockRejectedValue(new Error('ECONNREFUSED'));
+
+    const handler = registeredTools.get('anno_session_auth')!.handler;
+    const result = await handler({
+      domain: 'example.com',
+      url: 'https://example.com',
+    });
+
+    expect(result.content[0].text).toContain('not running');
   });
 });
