@@ -86,7 +86,7 @@ function classifyPage(
   const urlLower = url.toLowerCase();
 
   // Login page signals
-  if (pageState.interactiveElements.some((el) => el.type === 'input' && /password/i.test(el.attributes?.type ?? ''))) {
+  if (pageState.interactiveElements.some((el) => el.tag === 'input' && el.type === 'password')) {
     signals.push({ type: 'login', weight: 0.4 });
   }
   if (/log\s*in|sign\s*in/i.test(titleLower)) {
@@ -127,7 +127,7 @@ function classifyPage(
 
   // Form signals (many inputs without password = generic form)
   const inputCount = pageState.interactiveElements.filter((el) => el.type === 'input').length;
-  const hasPassword = pageState.interactiveElements.some((el) => el.type === 'input' && /password/i.test(el.attributes?.type ?? ''));
+  const hasPassword = pageState.interactiveElements.some((el) => el.tag === 'input' && el.type === 'password');
   if (inputCount >= 3 && !hasPassword) {
     signals.push({ type: 'form', weight: 0.2 });
   }
