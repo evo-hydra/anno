@@ -21,6 +21,7 @@ import { join } from 'path';
 import { logger } from '../utils/logger';
 import { rendererManager } from './renderer';
 import { detectChallengeSelectors, detectChallengePage } from '../core/wall-detector';
+import { encrypt, decrypt, loadOrCreateKey } from '../core/crypto';
 
 interface SessionMetadata {
   domain: string;
@@ -185,14 +186,29 @@ export class PersistentSessionManager {
       timezoneId: 'America/New_York'
     });
 
-    // Load saved cookies if available
-    const cookiesPath = join(this.config.cookieStorePath, `${domain}.json`);
+    // Load saved cookies if available (encrypted or legacy plaintext)
+    const encCookiesPath = join(this.config.cookieStorePath, `${domain}.cookies.enc`);
+    const legacyCookiesPath = join(this.config.cookieStorePath, `${domain}.json`);
+    const cookiesPath = existsSync(encCookiesPath) ? encCookiesPath : legacyCookiesPath;
     if (existsSync(cookiesPath)) {
       try {
-        const cookiesData = await readFile(cookiesPath, 'utf-8');
-        const cookies = JSON.parse(cookiesData);
-        await context.addCookies(cookies);
-        logger.info('loaded saved cookies', { domain, count: cookies.length });
+        if (cookiesPath.endsWith('.enc')) {
+          const key = await loadOrCreateKey(
+            join(this.config.cookieStorePath, '.persistent-session-key'),
+            'persistent-session',
+          );
+          const encData = await readFile(cookiesPath);
+          const plaintext = decrypt(encData, key);
+          const cookies = JSON.parse(plaintext);
+          await context.addCookies(cookies);
+          logger.info('loaded encrypted cookies', { domain, count: cookies.length });
+        } else {
+          // Legacy plaintext fallback
+          const cookiesData = await readFile(cookiesPath, 'utf-8');
+          const cookies = JSON.parse(cookiesData);
+          await context.addCookies(cookies);
+          logger.info('loaded legacy cookies', { domain, count: cookies.length });
+        }
       } catch (error) {
         logger.warn('failed to load cookies', { domain, error });
       }
@@ -281,9 +297,15 @@ export class PersistentSessionManager {
   private async saveCookies(domain: string, context: BrowserContext): Promise<void> {
     try {
       const cookies = await context.cookies();
-      const cookiesPath = join(this.config.cookieStorePath, `${domain}.json`);
-      await writeFile(cookiesPath, JSON.stringify(cookies, null, 2));
-      logger.debug('cookies saved', { domain, count: cookies.length });
+      const key = await loadOrCreateKey(
+        join(this.config.cookieStorePath, '.persistent-session-key'),
+        'persistent-session',
+      );
+      const plaintext = JSON.stringify(cookies);
+      const encrypted = encrypt(plaintext, key);
+      const cookiesPath = join(this.config.cookieStorePath, `${domain}.cookies.enc`);
+      await writeFile(cookiesPath, encrypted);
+      logger.debug('cookies saved (encrypted)', { domain, count: cookies.length });
     } catch (error) {
       logger.error('failed to save cookies', { domain, error });
     }

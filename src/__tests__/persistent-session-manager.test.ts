@@ -240,7 +240,12 @@ describe('PersistentSessionManager', () => {
     });
 
     it('loads saved cookies when they exist', async () => {
-      mockExistsSync.mockReturnValue(true);
+      // Legacy plaintext path: .enc doesn't exist, .json does
+      mockExistsSync.mockImplementation((p: string) => {
+        if (typeof p === 'string' && p.endsWith('.enc')) return false;
+        if (typeof p === 'string' && p.endsWith('.json')) return true;
+        return false;
+      });
       mockReadFile.mockResolvedValueOnce(
         JSON.stringify([{ name: 'sid', value: '123', domain: '.example.com' }])
       );
@@ -516,10 +521,10 @@ describe('PersistentSessionManager', () => {
       await getSessionWithTimers('example.com');
       await manager.closeSession('example.com');
 
-      expect(mockWriteFile).toHaveBeenCalledWith(
-        expect.stringContaining('example.com.json'),
-        expect.any(String)
-      );
+      // Cookies saved encrypted — path ends with .cookies.enc, data is a Buffer
+      // Also writes the key file (.persistent-session-key)
+      const writeArgs = mockWriteFile.mock.calls.map((c: unknown[]) => c[0]);
+      expect(writeArgs.some((p: string) => p.includes('example.com.cookies.enc'))).toBe(true);
     });
 
     it('handles save failure gracefully', async () => {
