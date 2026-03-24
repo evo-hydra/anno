@@ -155,21 +155,20 @@ router.post('/batch-fetch', async (req: Request, res: Response) => {
     for (let i = 0; i < urls.length; i += parallel) {
       const batch = urls.slice(i, i + parallel);
 
-      await Promise.all(
+      await Promise.allSettled(
         batch.map(async (url, batchIndex) => {
           const urlIndex = i + batchIndex;
 
-          // Send source start event
-          sendEvent(res, {
-            type: 'source_start',
-            payload: {
-              url,
-              index: urlIndex,
-              timestamp: Date.now()
-            }
-          });
-
           try {
+            // Send source start event
+            sendEvent(res, {
+              type: 'source_start',
+              payload: {
+                url,
+                index: urlIndex,
+                timestamp: Date.now()
+              }
+            });
             // Stream all events for this URL
             for await (const event of runPipeline({ url, useCache, maxNodes, mode: render ? 'rendered' : 'http' })) {
               // Wrap the event with source metadata
