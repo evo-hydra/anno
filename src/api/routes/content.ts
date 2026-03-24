@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { runPipeline } from '../../core/pipeline';
 import { logger } from '../../utils/logger';
+import { extractErrorMessage } from '../../utils/error';
 import { config } from '../../config/env';
 
 const router = Router();
@@ -97,12 +98,11 @@ router.post('/fetch', async (req: Request, res: Response) => {
     }
   } catch (error) {
     if (!clientDisconnected) {
-      logger.error('pipeline error', { url, error: (error as Error).message });
+      const message = extractErrorMessage(error);
+      logger.error('pipeline error', { url, error: message });
       sendEvent(res, {
         type: 'error',
-        payload: {
-          message: (error as Error).message
-        }
+        payload: { message }
       });
     }
   } finally {

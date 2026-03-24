@@ -10,6 +10,7 @@
 
 import { EventEmitter } from 'events';
 import { logger, startSpan } from '../utils/logger';
+import { extractErrorMessage } from '../utils/error';
 import { fetchPage, type FetchMode } from './fetcher';
 import { distillContent } from './distiller';
 import { robotsManager } from '../core/robots-parser';
@@ -540,7 +541,7 @@ export class Crawler extends EventEmitter {
         httpStatus = fetchResult.status;
         finalUrl = fetchResult.finalUrl;
       } catch (error) {
-        const errMsg = error instanceof Error ? error.message : 'fetch failed';
+        const errMsg = extractErrorMessage(error);
         const page: CrawlPage = {
           url,
           depth,
