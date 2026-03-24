@@ -237,6 +237,19 @@ export class SessionManager {
       record.pages = record.pages.filter((p) => !p.isClosed());
     }
 
+    // Enforce max pages per session to prevent resource leaks
+    const openPages = record.pages.filter((p) => !p.isClosed());
+    const MAX_PAGES_PER_SESSION = 10;
+    if (openPages.length >= MAX_PAGES_PER_SESSION) {
+      logger.warn('max pages per session reached, closing oldest', { sessionId, count: openPages.length });
+      try {
+        await openPages[0].close();
+      } catch {
+        // Page may already be closing
+      }
+      record.pages = record.pages.filter((p) => !p.isClosed());
+    }
+
     const page = await record.context.newPage();
     record.pages.push(page);
 

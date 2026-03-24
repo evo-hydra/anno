@@ -290,7 +290,11 @@ class RendererManager {
       return { result, status: this.getStatus() };
     } finally {
       if (context) {
-        await context.close();
+        try {
+          await context.close();
+        } catch (closeErr) {
+          logger.warn('failed to close renderer context', { error: (closeErr as Error).message });
+        }
       }
       this.semaphore.release();
     }
