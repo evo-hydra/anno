@@ -137,6 +137,7 @@ router.post('/auth', async (req: Request, res: Response) => {
 
     // Optionally create a persistent session with the authenticated cookies
     let sessionId: string | undefined;
+    let sessionError: string | undefined;
     if (createSession) {
       try {
         const sm = await getSessionManager();
@@ -152,8 +153,9 @@ router.post('/auth', async (req: Request, res: Response) => {
         sessionId = session.id;
         logger.info('session-auth: persistent session created', { sessionId, domain });
       } catch (err) {
+        sessionError = (err as Error).message;
         logger.warn('session-auth: failed to create persistent session', {
-          error: (err as Error).message,
+          error: sessionError,
         });
       }
     }
@@ -173,6 +175,7 @@ router.post('/auth', async (req: Request, res: Response) => {
       challengeDetected: result.challengeDetected,
       rendered: true,
       sessionId,
+      ...(sessionError ? { sessionError } : {}),
     });
   } catch (error) {
     const message = extractErrorMessage(error);
